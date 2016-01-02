@@ -65,22 +65,38 @@ class EchoHandler(socketserver.DatagramRequestHandler):
             METHOD = line_decod.split(' ')[0].upper()
             METHODS = ['INVITE', 'BYE', 'ACK', 'REGISTER']
             if len(line_decod) >= 2:
+                print("El cliente nos manda " + line_decod)
                 if METHOD == 'REGISTER':
-                    # FALTA POR HACER
+                    # Nos ha llegado un REGISTER
+                    # FALTA POR HACER NONCE
+                    # FALTAN LOS LOG
                 elif METHOD == 'INVITE':
+                    # Nos ha llegado un INVITE
+                    # FALTA POR MIRAR
                     message_send = b'SIP/2.0 100 Trying\r\n\r\n'
                     message_send += b'SIP/2.0 180 Ring\r\n\r\n'
                     message_send += b'SIP/2.0 200 OK\r\n\r\n'
                     self.wfile.write(message_send)
                 elif METHOD == 'ACK':
-                    aEjecutar = './mp32rtp -i ' + IP + ' -p 23032 <' + FICH
+                    # Nos ha llegado un ACK
+                    os.system('chmod 777 mp32rtp')
+                    # Contenido del archivo de audio a ejecutar
+                    Primero_a_Ejecutar = './mp32rtp -i ' + IPPROXY + ' -p '
+                    Segundo_a_Ejecutar = str(PORTAUDIO) + '<' + PATHAUDIO
+                    aEjecutar = Primero_a_Ejecutar + Segundo_a_Ejecutar
+                    print('Se está ejercutando el RTP')
                     os.system(aEjecutar)
+                    # FALTA EL LOG
                 elif METHOD == 'BYE':
+                    # Nos ha llegado un BYE
                     self.wfile.write(b"SIP/2.0 200 OK\r\n\r\n")
                 elif METHOD not in METHODS:
+                    # Nos ha llegado un método descoocido
                     message_send = b'SIP/2.0 405 Method Not Allowed\r\n\r\n'
                     self.wfile.write(message_send)
+                    # FALTA EL LOG
                 else:
+                    # Respuesta mal formada
                     self.wfile.write(b"SIP/2.0 400 Bad Request\r\n\r\n")
             else:
                 print("El cliente nos manda " + line_decod)
