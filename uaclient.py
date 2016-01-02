@@ -41,7 +41,13 @@ if METHOD == 'REGISTER':
     LINE = Line_Sip + Line_Register + Line_Expires
 	# FALTA AUTHORIZATION
 elif METHOD == 'INVITE':
-	LINE = Line_Sip + Receptor + " SIP/2.0\r\n"
+	Line_Invite_sip = Line_Sip + Receptor + " SIP/2.0\r\n"
+	Line_Content_Type = "Content-Type: application/sdp\r\n\r\n"
+	Line_Version_Option = "v=0\r\n" + "o=" + USER + " " + IP + " \r\n"
+	Line_Session_T = "s=misesion\r\n" + "t=0" 
+	Line_Audio = "m=audio" + PORT_AUDIO + "RTP\r\n"
+	LINE = Line_Invite_sip + Line_Content_Type + Line_Version_Option
+	LINE += Line_Session_T + Line_Audio
 elif METHOD == 'BYE':
 	LINE = Line_Sip + Receptor + " SIP/2.0\r\n"
 
@@ -65,6 +71,11 @@ if lista == ['SIP/2.0 100 Trying', 'SIP/2.0 180 Ring', 'SIP/2.0 200 OK']:
     print("Enviando: " + LINEACK)
     my_socket.send(bytes(LINEACK, 'utf-8') + b'\r\n')
     data = my_socket.recv(1024)
+elif lista[0] == 'SIP/2.0 401 Unauthorized':
+	Line_Regist = "REGISTER" + " sip:" + USER + ":" + PORT + " SIP/2.0\r\n"
+    Line_Expires = "Expires: " + EXPIRATION + "\r\n"
+	Line_Authorization = "Authorization: response="+ Password + "\r\n"
+    LINE = Line_Regist + Line_Expires + Line_Authorization 
 
 # Cerramos todo
 my_socket.close()
