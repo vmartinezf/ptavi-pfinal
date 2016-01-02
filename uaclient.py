@@ -8,10 +8,14 @@ import socket
 import sys
 import os
 import time
+from xml.sax import make_parser
+from xml.sax.handler import ContentHandler
+import hashlib
+from uaserver import XMLHandler
 
-# Cliente UDP simple.
 
-# Dirección IP del servidor.
+# Cliente UDP simple Sip.
+
 if len(sys.argv) != 4:
     sys.exit("Usage: python uaclient.py config method option")
 try:
@@ -25,9 +29,32 @@ except:
 if PORT < 1024:
     sys.exit("ERROR: PORT IS INCORRECT")
 
+try:
+	if os.path.exists(CONFIG) is False:
+    	print ("This name of file doesn´t exist")
+        raise SystemExit
+    # MIRAR BIEN ESTA PARTE
+    # Sacamos los datos del xml
+	parser = make_parser()
+    cHandler = SmallSMILHandler()
+    parser.setContentHandler(cHandler)
+    parser.parse(open(CONFIG))
+	lista = cHandler.get_tags()
 
-fich = open(CONFIG, 'r')
+    diccionario = lista[0]
+    # Meto los valores del xml en variables
+    USER_NAME = diccionario['account']['username']
+    PASSWD = diccionario['account']['passwd']
+    UASERVER_IP = diccionario['uaserver']['ip']
+    UASERVER_PORT = diccionario['uaserver']['puerto']
+    PORT_AUDIO  = diccionario['rtpaudio']['puerto']
+    IP_PROXY = diccionario['regproxy']['ip']
+    PORT_PROXY = diccionario['regproxy']['puerto']
+    PATH_LOG = diccionario['log']['path']
+    PATH_AUDIO = diccionario['audio']['path']
 
+except IndexError:
+	sys.exit("Usage: python uaclient.py config method option")
 
 # Excepción por si es un método diferente a los permitidos       
 lista_metodos = ['REGISTER', 'INVITE', 'BYE']
@@ -72,9 +99,13 @@ if lista == ['SIP/2.0 100 Trying', 'SIP/2.0 180 Ring', 'SIP/2.0 200 OK']:
     my_socket.send(bytes(LINEACK, 'utf-8') + b'\r\n')
     data = my_socket.recv(1024)
 elif lista[0] == 'SIP/2.0 401 Unauthorized':
+    # MIRAR BIEN
+    m = hashlib.md5()
+    m.update(b(passwd) + b(nonce))
+    response = m.hexdigest()
 	Line_Regist = "REGISTER" + " sip:" + USER + ":" + PORT + " SIP/2.0\r\n"
     Line_Expires = "Expires: " + EXPIRATION + "\r\n"
-	Line_Authorization = "Authorization: response="+ Password + "\r\n"
+	Line_Authorization = "Authorization: response="+ RESPONSE + "\r\n"
     LINE = Line_Regist + Line_Expires + Line_Authorization 
 
 # Cerramos todo
