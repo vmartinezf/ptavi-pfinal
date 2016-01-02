@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <!DOCTYPE config SYSTEM "pr.dtd">
 <config>
-	<server nombre="MiServidorGuay" ip="127.0.0.1" puerto="5050"/>
+	<server name="MiServidorGuay" ip="127.0.0.1" puerto="5050"/>
 	<database path="database" passwdpath="passwd" />
     <log path="proxy_log.txt"/>
 </config>
