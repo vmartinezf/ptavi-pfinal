@@ -66,11 +66,7 @@ class EchoHandler(socketserver.DatagramRequestHandler):
             METHODS = ['INVITE', 'BYE', 'ACK', 'REGISTER']
             if len(line_decod) >= 2:
                 print("El cliente nos manda " + line_decod)
-                if METHOD == 'REGISTER':
-                    # Nos ha llegado un REGISTER
-                    # FALTA POR HACER NONCE
-                    # FALTAN LOS LOG
-                elif METHOD == 'INVITE':
+                if METHOD == 'INVITE':
                     # Nos ha llegado un INVITE
                     # FALTA POR MIRAR
                     message_send = b'SIP/2.0 100 Trying\r\n\r\n'
@@ -81,8 +77,8 @@ class EchoHandler(socketserver.DatagramRequestHandler):
                     # Nos ha llegado un ACK
                     os.system('chmod 777 mp32rtp')
                     # Contenido del archivo de audio a ejecutar
-                    Primero_a_Ejecutar = './mp32rtp -i ' + IPPROXY + ' -p '
-                    Segundo_a_Ejecutar = str(PORTAUDIO) + '<' + PATHAUDIO
+                    Primero_a_Ejecutar = './mp32rtp -i ' + IP_PROXY + ' -p '
+                    Segundo_a_Ejecutar = str(PORT_AUDIO) + '<' + PATH_AUDIO
                     aEjecutar = Primero_a_Ejecutar + Segundo_a_Ejecutar
                     print('Se está ejercutando el RTP')
                     os.system(aEjecutar)
@@ -125,18 +121,18 @@ if __name__ == "__main__":
 
         diccionario = lista[0]
         # Meto los valores del xml en variables
-        USERNAME = diccionario['account']['username']
+        USER_NAME = diccionario['account']['username']
         PASSWD = diccionario['account']['passwd']
         UASERVER_IP = diccionario['uaserver']['ip']
         UASERVER_PORT = diccionario['uaserver']['puerto']
-        PORTAUDIO  = diccionario['rtpaudio']['puerto']
-        IPPROXY = diccionario['regproxy']['ip']
-        PORTPROXY = diccionario['regproxy']['puerto']
-        PATHLOG = diccionario['log']['path']
-        PATHAUDIO = diccionario['audio']['path']
+        PORT_AUDIO  = diccionario['rtpaudio']['puerto']
+        IP_PROXY = diccionario['regproxy']['ip']
+        PORT_PROXY = diccionario['regproxy']['puerto']
+        PATH_LOG = diccionario['log']['path']
+        PATH_AUDIO = diccionario['audio']['path']
 
         # Comprobación de si existe el archivo de audio
-        if not os.path.exists(PATHAUDIO):
+        if not os.path.exists(PATH_AUDIO):
            print "This name of file os audio doesn´t exist"
            raise SystemExit    
 
