@@ -1,13 +1,54 @@
 #!/usr/bin/python3
 # -*- coding: utf-8 -*-
 """
-Clase (y programa principal) para un uaserver de eco en UDP simple
+Clases (y programa principal) para un uaserver de eco en UDP simple
 """
 
 import socketserver
 import sys
 import os
 import os.path
+from xml.sax import make_parser
+from xml.sax.handler import ContentHandler
+
+
+# Creamos una clase XMLHandler de la misma forma que creamos una en la P3 para
+# Smil
+class XMLHandler(ContentHandler):
+    """
+    Clase para manejar xml
+    """
+
+    def __init__(self):
+        """
+        Constructor. Inicializamos las variables
+        """
+        self.lista_etiquetas = []
+        self.dic = {'account': ['username', 'passwd'],
+                    'uaserver': ['ip', 'puerto'],
+                    'rtpaudio': ['puerto'],
+                    'regproxy': ['ip', 'puerto'],
+                    'log': ['path'],
+					'audio': ['path']}
+
+    def startElement(self, name, attrs):
+        """
+        Método que se llama para alamacenar las etiquetas,
+        los atributos y su contenido
+        """
+        if name in self.dic:
+            dicc = {}
+            for item in self.dic[name]:
+                dicc[item] = attrs.get(item, "")
+            diccname = {name: dicc}
+            self.lista_etiquetas.append(diccname)
+
+    def get_tags(self):
+        """
+        Método que devuelve las etiquetas,
+        los atributos y su contenido
+        """
+        return self.lista_etiquetas
 
 
 class EchoHandler(socketserver.DatagramRequestHandler):
@@ -24,6 +65,8 @@ class EchoHandler(socketserver.DatagramRequestHandler):
             METHOD = line_decod.split(' ')[0].upper()
             METHODS = ['INVITE', 'BYE', 'ACK']
             if len(line_decod) >= 2:
+				if METHOD == 'REGISTER':
+					# FALTA POR HACER
                 if METHOD == 'INVITE':
                     message_send = b'SIP/2.0 100 Trying\r\n\r\n'
                     message_send += b'SIP/2.0 180 Ring\r\n\r\n'
