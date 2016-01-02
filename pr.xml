@@ -2,6 +2,6 @@
 <!DOCTYPE config SYSTEM "pr.dtd">
 <config>
 	<server name="MiServidorGuay" ip="127.0.0.1" puerto="5050"/>
-	<database path="database" passwdpath="passwd" />
+	<database path="database.txt" passwdpath="passwd" />
     <log path="proxy_log.txt"/>
 </config>
