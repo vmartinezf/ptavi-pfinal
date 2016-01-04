@@ -58,9 +58,9 @@ def Datos_Log(fichero, evento, ip, port, line):
     if evento == 'Error':
         datos1 = time_now + ' ' + evento + ': No server listening at '
         datos = datos1 + ip + port + '\r\n'
-    elif evento != 'Starting...' and evento 1= 'Finishing.':
+    elif evento != 'Starting...' and evento != 'Finishing.':
         puerto = str(port)
-        datos1 = time_now + ' ' + evento + ip  ':' + puerto + ': ' + line
+        datos1 = time_now + ' ' + evento + ip + ':' + puerto + ': ' + line
         datos = datos1 + '\r\n'
     else:
         datos = time_now + ' ' + evento + '\r\n'
@@ -83,28 +83,51 @@ class EchoHandler(socketserver.DatagramRequestHandler):
             METHODS = ['INVITE', 'BYE', 'ACK']
             if len(line_decod) >= 2:
                 print("El cliente nos manda " + line_decod)
+                # Escribimos mensages de recepción en el fichero de log
+                Evento = ' Received from '
+                Datos_Log(PATH_LOG, Evento, IP_PROXY, PORT_PROXY, line_decod)
                 if METHOD == 'INVITE':
-                    # Nos ha llegado un INVITE
-                    # FALTA POR MIRAR
+                    print("Nos ha llegado un INVITE")
                     message_send = b'SIP/2.0 100 Trying\r\n\r\n'
                     message_send += b'SIP/2.0 180 Ring\r\n\r\n'
                     message_send += b'SIP/2.0 200 OK\r\n\r\n'
+                    message_send += b'Content-Type: application/sdp\r\n\r\n'
+                    message_send += b'v=0\r\n'
+                    message_send += b'o=' + USER_NAME + ' ' + UASERVER_IP
+                    message_send += b' \r\n' + 's=misesion\r\n' + 't=0'
+                    message_send += b'm=audio' + PORT_AUDIO + 'RTP\r\n\r\n'
+                    # Enviamos el mensaje de respuesta al INVITE
                     self.wfile.write(message_send)
+                    print("Enviamos" + message_send)
+                    # Escribimos los mensages de envio en el log
+                    Event = ' Send to '
+                    linea = message_send
+                    Datos_Log(PATH_LOG, Event, IP_PROXY, PORT_PROXY, linea)
                 elif METHOD == 'ACK':
-                    # Nos ha llegado un ACK
+                    print("Nos ha llegado un ACK")
                     os.system('chmod 777 mp32rtp')
                     # Contenido del archivo de audio a ejecutar
                     Primero_a_Ejecutar = './mp32rtp -i ' + IP_PROXY + ' -p '
                     Segundo_a_Ejecutar = str(PORT_AUDIO) + '<' + PATH_AUDIO
                     aEjecutar = Primero_a_Ejecutar + Segundo_a_Ejecutar
-                    print('Se está ejercutando el RTP')
+                    print('Se está ejecutando el RTP')
+                    # Escribimos el mensage de comienzo RTP en el log
+                    Event = ' Terminando el envío RTP '
+                    Datos_Log(PATH_LOG, Event, '', '', '')
+                    # Se está ejecutando
                     os.system(aEjecutar)
-                    # FALTA EL LOG
+                    # Escribimos el mensage de fin RTP en el log
+                    Event = ' Terminando el envío RTP '
+                    Datos_Log(PATH_LOG, Event, '', '', '')
                 elif METHOD == 'BYE':
-                    # Nos ha llegado un BYE
-                    self.wfile.write(b"SIP/2.0 200 OK\r\n\r\n")
+                    print("Nos ha llegado un BYE")
+                    mssg_send = b"SIP/2.0 200 OK\r\n\r\n"
+                    self.wfile.write(mssg_send)
+                    # Escribimos el mensage de envio en el log
+                    Event = ' Send to '
+                    Datos_Log(PATH_LOG, Event, IP_PROXY, PORT_PROXY, mssg_send)
                 elif METHOD not in METHODS:
-                    # Nos ha llegado un método descoocido
+                    print("Nos ha llegado un método descoocido")
                     message_send = b'SIP/2.0 405 Method Not Allowed\r\n\r\n'
                     self.wfile.write(message_send)
                     # FALTA EL LOG
@@ -127,15 +150,14 @@ if __name__ == "__main__":
 
         # Comprobación de si existe el fichero pasado como parámetro
         if os.path.exists(CONFIG) is False:
-        	print ("This name of file doesn´t exist")
-            raise SystemExit
+        	sys.exit("This name of file doesn´t exist")
 
 		# Saco el contenido del fichero xml
-		parser = make_parser()
-    	cHandler = SmallSMILHandler()
-    	parser.setContentHandler(cHandler)
-    	parser.parse(open(CONFIG))
-		lista = cHandler.get_tags()
+        parser = make_parser()
+        cHandler = XMLHandler()
+        parser.setContentHandler(cHandler)
+        parser.parse(open(CONFIG))
+        lista = cHandler.get_tags()
 
         diccionario = lista[0]
         # Meto los valores del xml en variables
@@ -151,13 +173,11 @@ if __name__ == "__main__":
 
         # Comprobación de si existe el archivo de audio
         if not os.path.exists(PATH_AUDIO):
-           print "This name of file os audio doesn´t exist"
-           raise SystemExit    
+           sys.exit("This name of file os audio doesn´t exist")
 
     except IOError:
         sys.exit("Usage: python uaserver.py config")
     PORT = int(UASERVER_PORT)
     serv = socketserver.UDPServer((UASERVER_IP, PORT), EchoHandler)
-    fich = open(PATH_LOG, 'a')
     print("Listening...")
     serv.serve_forever()
