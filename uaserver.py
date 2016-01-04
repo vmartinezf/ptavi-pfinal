@@ -75,8 +75,8 @@ def Response_INVITE(username, ipserver, port, message_send)
     message_send += b'Content-Type: application/sdp\r\n\r\n'
     message_send += b'v=0\r\n'
     message_send += b'o=' + USER_NAME + ' ' + UASERVER_IP
-    message_send += b' \r\n' + 's=misesion\r\n' + 't=0'
-    message_send += b'm=audio' + PORT_AUDIO + 'RTP\r\n\r\n'
+    message_send += b' \r\n' + 's=misesion\r\n' + 't=0\r\n'
+    message_send += b'm=audio ' + PORT_AUDIO + ' RTP\r\n\r\n'
 
 
 class EchoHandler(socketserver.DatagramRequestHandler):
