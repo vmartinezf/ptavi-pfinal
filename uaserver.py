@@ -10,6 +10,7 @@ import os
 import os.path
 from xml.sax import make_parser
 from xml.sax.handler import ContentHandler
+import hashlib
 
 
 # Creamos una clase XMLHandler de la misma forma que creamos una en la P3 para
@@ -51,6 +52,22 @@ class XMLHandler(ContentHandler):
         return self.lista_etiquetas
 
 
+def Datos_Log(fichero, evento, ip, port, line):
+    fich = open(fichero, 'a')
+    time_now = time.strftime("%Y%m%d%H%M%S", time.gmtime(time.time()))
+    if evento == 'Error':
+        datos1 = time_now + ' ' + evento + ': No server listening at '
+        datos = datos1 + ip + port + '\r\n'
+    elif evento != 'Starting...' and evento 1= 'Finishing.':
+        puerto = str(port)
+        datos1 = time_now + ' ' + evento + ip  ':' + puerto + ': ' + line
+        datos = datos1 + '\r\n'
+    else:
+        datos = time_now + ' ' + evento + '\r\n'
+    fich.write(datos)
+    fich.close()
+
+
 class EchoHandler(socketserver.DatagramRequestHandler):
     """
     Echo server class
@@ -63,7 +80,7 @@ class EchoHandler(socketserver.DatagramRequestHandler):
             line = self.rfile.read()
             line_decod = line.decode('utf-8')
             METHOD = line_decod.split(' ')[0].upper()
-            METHODS = ['INVITE', 'BYE', 'ACK', 'REGISTER']
+            METHODS = ['INVITE', 'BYE', 'ACK']
             if len(line_decod) >= 2:
                 print("El cliente nos manda " + line_decod)
                 if METHOD == 'INVITE':
@@ -100,6 +117,7 @@ class EchoHandler(socketserver.DatagramRequestHandler):
             # Si no hay más líneas salimos del bucle infinito
             if not line:
                 break
+
 
 if __name__ == "__main__":
     # Creamos servidor de eco y escuchamos
@@ -138,6 +156,8 @@ if __name__ == "__main__":
 
     except IOError:
         sys.exit("Usage: python uaserver.py config")
-    serv = socketserver.UDPServer(('', PORT), EchoHandler)
+    PORT = int(UASERVER_PORT)
+    serv = socketserver.UDPServer((UASERVER_IP, PORT), EchoHandler)
+    fich = open(PATH_LOG, 'a')
     print("Listening...")
     serv.serve_forever()
