@@ -130,7 +130,7 @@ class EchoHandler(socketserver.DatagramRequestHandler):
                     Event = ' Send to '
                     Datos_Log(PATH_LOG, Event, IP_PROXY, PORT_PROXY, mssg_send)
                 elif METHOD not in METHODS:
-                    print("Nos ha llegado un método descoocido")
+                    print("Nos ha llegado un método desconocido")
                     message_send = b'SIP/2.0 405 Method Not Allowed\r\n\r\n'
                     self.wfile.write(message_send)
                 else:
