@@ -56,17 +56,16 @@ if __name__ == "__main__":
         parser.parse(open(CONFIG))
 	    lista = cHandler.get_tags()
 
-        diccionario = lista[0]
         # Meto los valores del xml en variables
-        USER_NAME = diccionario['account']['username']
-        PASSWD = diccionario['account']['passwd']
-        UASERVER_IP = diccionario['uaserver']['ip']
-        UASERVER_PORT = diccionario['uaserver']['puerto']
-        PORT_AUDIO  = diccionario['rtpaudio']['puerto']
-        IP_PROXY = diccionario['regproxy']['ip']
-        PORT_PROXY = diccionario['regproxy']['puerto']
-        PATH_LOG = diccionario['log']['path']
-        PATH_AUDIO = diccionario['audio']['path']
+        USER_NAME = lista[0]['account']['username']
+        PASSWD = lista[0]['account']['passwd']
+        UASERVER_IP = lista[1]['uaserver']['ip']
+        UASERVER_PORT = lista[1]['uaserver']['puerto']
+        PORT_AUDIO  = lista[2]['rtpaudio']['puerto']
+        IP_PROXY = lista[3]['regproxy']['ip']
+        PORT_PROXY = lista[3]['regproxy']['puerto']
+        PATH_LOG = lista[4]['log']['path']
+        PATH_AUDIO = lista[5]['audio']['path']
 
     except IndexError:
 	    sys.exit("Usage: python uaclient.py config method option")
