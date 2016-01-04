@@ -68,6 +68,17 @@ def Datos_Log(fichero, evento, ip, port, line):
     fich.close()
 
 
+def Response_INVITE(username, ipserver, port, message_send)   
+    message_send = b'SIP/2.0 100 Trying\r\n\r\n'
+    message_send += b'SIP/2.0 180 Ring\r\n\r\n'
+    message_send += b'SIP/2.0 200 OK\r\n\r\n'
+    message_send += b'Content-Type: application/sdp\r\n\r\n'
+    message_send += b'v=0\r\n'
+    message_send += b'o=' + USER_NAME + ' ' + UASERVER_IP
+    message_send += b' \r\n' + 's=misesion\r\n' + 't=0'
+    message_send += b'm=audio' + PORT_AUDIO + 'RTP\r\n\r\n'
+
+
 class EchoHandler(socketserver.DatagramRequestHandler):
     """
     Echo server class
@@ -88,21 +99,13 @@ class EchoHandler(socketserver.DatagramRequestHandler):
                 Datos_Log(PATH_LOG, Evento, IP_PROXY, PORT_PROXY, line_decod)
                 if METHOD == 'INVITE':
                     print("Nos ha llegado un INVITE")
-                    message_send = b'SIP/2.0 100 Trying\r\n\r\n'
-                    message_send += b'SIP/2.0 180 Ring\r\n\r\n'
-                    message_send += b'SIP/2.0 200 OK\r\n\r\n'
-                    message_send += b'Content-Type: application/sdp\r\n\r\n'
-                    message_send += b'v=0\r\n'
-                    message_send += b'o=' + USER_NAME + ' ' + UASERVER_IP
-                    message_send += b' \r\n' + 's=misesion\r\n' + 't=0'
-                    message_send += b'm=audio' + PORT_AUDIO + 'RTP\r\n\r\n'
+                    Response_INVITE(USER_NAME, UASERVER_IP, PORT_AUDIO, message)
                     # Enviamos el mensaje de respuesta al INVITE
-                    self.wfile.write(message_send)
-                    print("Enviamos" + message_send)
+                    self.wfile.write(message)
+                    print("Enviamos" + message)
                     # Escribimos los mensages de envio en el log
                     Event = ' Send to '
-                    linea = message_send
-                    Datos_Log(PATH_LOG, Event, IP_PROXY, PORT_PROXY, linea)
+                    Datos_Log(PATH_LOG, Event, IP_PROXY, PORT_PROXY, message)
                 elif METHOD == 'ACK':
                     print("Nos ha llegado un ACK")
                     os.system('chmod 777 mp32rtp')
