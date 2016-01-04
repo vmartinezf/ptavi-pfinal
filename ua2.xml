@@ -1,5 +1,4 @@
 <?xml version="1.0" encoding="utf-8" ?>
-<!DOCTYPE config SYSTEM "ua2.dtd">
 <config>
 	<account username="leonard@bigbang.org" passwd="leobbb"/>
 	<uaserver ip="127.0.0.1" puerto="4040"/>
