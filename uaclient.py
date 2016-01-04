@@ -15,6 +15,22 @@ from uaserver import XMLHandler
 from uaserver import Datos_Log
 
 
+def Data_REGIST_NO_AUT(Linea, Port, username, option, LINE):
+    Line_Register = username + ":" + Port + " SIP/2.0\r\n"
+    Line_Expires = "Expires: " + option + "\r\n"
+    LINE = Linea + Line_Register + Line_Expires
+
+
+def Data_INVITE(Linea, option, username, Port ,ip, LINE):
+    Line_Invite_sip = Linea + option + " SIP/2.0\r\n"
+	Line_Content_Type = "Content-Type: application/sdp\r\n\r\n"
+	Line_Version_Option = "v=0\r\n" + "o=" + username + " " + ip + " \r\n"
+	Line_Session_T = "s=misesion\r\n" + "t=0\r\n"
+	Line_Audio = "m=audio " + Port + " RTP\r\n"
+	LINE = Line_Invite_sip + Line_Content_Type + Line_Version_Option
+	LINE += Line_Session_T + Line_Audio
+
+
 # Cliente UDP simple Sip.
 if __name__ == "__main__":
 
@@ -66,19 +82,14 @@ if __name__ == "__main__":
             Event = ' Starting...'
             Datos_Log(PATH_LOG, Event, '', '', '')
             # Datos de envio del REGISTER sin Autentincación
-	        Line_Register = USER_NAME + ":" + UASERVER_PORT + " SIP/2.0\r\n"
-            Line_Expires = "Expires: " + OPTION + "\r\n"
-            LINE = Line_Sip + Line_Register + Line_Expires
+            Data_REGIST_NO_AUT(Line_Sip, UASERVER_PORT, USER_NAME, OPTION, LINE)
         elif METHOD == 'INVITE':
-	        Line_Invite_sip = Line_Sip + Receptor + " SIP/2.0\r\n"
-	        Line_Content_Type = "Content-Type: application/sdp\r\n\r\n"
-	        Line_Version_Option = "v=0\r\n" + "o=" + USER + " " + IP + " \r\n"
-	        Line_Session_T = "s=misesion\r\n" + "t=0\r\n" 
-	        Line_Audio = "m=audio" + PORT_AUDIO + "RTP\r\n"
-	        LINE = Line_Invite_sip + Line_Content_Type + Line_Version_Option
-	        LINE += Line_Session_T + Line_Audio
+            IP = UASERVER_IP
+            Data_INVITE(Line_Sip, OPTION, USER_NAME, PORT_AUDIO, IP, LINE)
         elif METHOD == 'BYE':
 	        LINE = Line_Sip + Receptor + " SIP/2.0\r\n"
+        else:
+            sys.exit("This method is incorrect")
 
 
         # Creamos el socket, lo configuramos y lo atamos a un servidor/puerto
@@ -86,11 +97,12 @@ if __name__ == "__main__":
         my_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         my_socket.connect((IP_PROXY, PORT_PROXY))
 
-        # Estamos enviando ddatos
+        # Estamos enviando datos
         print("Enviando: " + LINE)
         my_socket.send(bytes(LINE, 'utf-8') + b'\r\n')
+        # Escribimos en el log los datos que enviamos
         Evento = ' Send to '
-        Datos_Log(PATH_LOG, Evento, IP_PROXY, PORT_PROXY, LINE
+        Datos_Log(PATH_LOG, Evento, IP_PROXY, PORT_PROXY, LINE)
 
         # Recibimos datos
         data = my_socket.recv(1024)
@@ -103,25 +115,60 @@ if __name__ == "__main__":
         Trying = 'SIP/2.0 100 Trying'
         Ring = 'SIP/2.0 180 Ring'
         OK = 'SIP/2.0 200 OK'
-        if lista == [Trying, Ring, OK]:
+        if lista[0:3] == [Trying, Ring, OK]:
+            print("Hemos recibido Trying, Ring y OK")
             LINEACK = "ACK" + " sip:" + Receptor + " SIP/2.0\r\n"
             print("Enviando: " + LINEACK)
             my_socket.send(bytes(LINEACK, 'utf-8') + b'\r\n')
             data = my_socket.recv(1024)
+            # Escribimos en el log los datos que enviamos
+            Evento = ' Send to ' 
+            Datos_Log(PATH_LOG, Evento, IP_PROXY, PORT_PROXY, LINEACK)
+
+            # RTP
+            IP_RECEPT = lista[5].split(' ')[1]
+            PORT_RECEPT = lista[7].split(' ')[1]
+            os.system('chmod 777 mp32rtp')
+            # Contenido del archivo de audio a ejecutar
+            Primero_a_Ejecutar = './mp32rtp -i ' + IP_RECEPT + ' -p '
+            Segundo_a_Ejecutar = str(PORT_RECEPT) + '<' + PATH_AUDIO
+            aEjecutar = Primero_a_Ejecutar + Segundo_a_Ejecutar
+            print('Se está ejecutando el RTP')
+            # Escribimos el mensage de comienzo RTP en el log
+            Event = ' Terminando el envío RTP '
+            Datos_Log(PATH_LOG, Event, '', '', '')
+            # Se está ejecutando
+            os.system(aEjecutar)
+            # Escribimos el mensage de fin RTP en el log
+            Event = ' Terminando el envío RTP '
+            Datos_Log(PATH_LOG, Event, '', '', '')
+        elif lista == OK:
+            print ("Recibido el OK")
         elif lista[0] == 'SIP/2.0 401 Unauthorized':
             # MIRAR BIEN
+            print("Hemos recibido 401 Unauthorized")
             m = hashlib.md5()
             m.update(b(passwd) + b(nonce))
             response = m.hexdigest()
-	        Line_Regist = "REGISTER" + " sip:" + USER + ":" + PORT 
-            Line_Regist += " SIP/2.0\r\n"
-            Line_Expires = "Expires: " + EXPIRATION + "\r\n"
+            Data_REGIST_NO_AUT(Line_Sip, UASERVER_PORT, USER_NAME, OPTION, Line)
 	        Line_Authorization = "Authorization: response="+ RESPONSE + "\r\n"
-            LINE = Line_Regist + Line_Expires + Line_Authorization 
+            LINE_REGIST = Line + Line_Authorization
+            my_socket.send(bytes(LINE_REGIST, 'utf-8') + b'\r\n')
+            print("Enviando: " + LINE_REGIST)
+            # Escribimos en el log los datos que enviamos
+            Evento = ' Send to ' 
+            Datos_Log(PATH_LOG, Evento, IP_PROXY, PORT_PROXY, LINEREGIST)
+        else:
+            print("Hemos recibido un método incorrecto")
+            # Escribimos en el log el mensaje de error
+            Evento = 'Error: Method incorrect'
+            Datos_Log(PATH_LOG, Evento, '', '', '')
 
         # Cerramos todo
         print("Terminando el socket")
         my_socket.close()
+        Event = ' Finishing.'
+        Datos_Log(PATH_LOG, Event, '', '', '')
         print("Fin.")
 
     except:
