@@ -11,6 +11,7 @@ import time
 import os
 from xml.sax import make_parser
 from xml.sax.handler import ContentHandler
+import hashlib
 
 
 class XMLHandler(ContentHandler):
@@ -45,7 +46,7 @@ class XMLHandler(ContentHandler):
         los atributos y su contenido
         """
         return self.lista_etiquetas
-
+        
 
 if __name__ == "__main__":
     try:
@@ -63,14 +64,13 @@ if __name__ == "__main__":
     	parser.parse(open(CONFIG))
 		lista = cHandler.get_tags()
 
-        diccionario = lista[0]
         # Meto los valores del xml en variables
-        SERVER_NAME = diccionario['server']['name']
-        SERVER_IP = diccionario['server']['ip']
-        SERVER_PORT = diccionario['server']['puerto']
-        DATABASE_PATH = diccionario['database']['path']
-        DATABASE_PASSWDPATH = diccionario['database']['passwdpath']]
-        PATHLOG = diccionario['log']['path']]
+        SERVER_NAME = lista[0]['server']['name']
+        SERVER_IP = lista[0]['server']['ip']
+        SERVER_PORT = lista[0]['server']['puerto']
+        DATABASE_PATH = lista[1]['database']['path']
+        DATABASE_PASSWDPATH = lista[1]['database']['passwdpath']]
+        PATHLOG = lista[2]['log']['path']]
 
 	except:
 		sys.exit("Usage: python proxy_registrar.py config")
