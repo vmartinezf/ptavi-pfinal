@@ -130,7 +130,6 @@ class EchoHandler(socketserver.DatagramRequestHandler):
                     print("Nos ha llegado un método descoocido")
                     message_send = b'SIP/2.0 405 Method Not Allowed\r\n\r\n'
                     self.wfile.write(message_send)
-                    # FALTA EL LOG
                 else:
                     # Respuesta mal formada
                     self.wfile.write(b"SIP/2.0 400 Bad Request\r\n\r\n")
