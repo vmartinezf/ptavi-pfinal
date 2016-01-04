@@ -13,6 +13,7 @@ from xml.sax.handler import ContentHandler
 import hashlib
 from uaserver import XMLHandler
 from uaserver import Datos_Log
+from proxy_registrar import XMLHandler_Proxy
 
 
 def Data_REGIST_NO_AUT(Linea, Port, username, option, LINE):
@@ -125,8 +126,8 @@ if __name__ == "__main__":
             Datos_Log(PATH_LOG, Evento, IP_PROXY, PORT_PROXY, LINEACK)
 
             # RTP
-            IP_RECEPT = lista[5].split(' ')[1]
-            PORT_RECEPT = lista[7].split(' ')[1]
+            IP_RECEPT = lista[4].split(' ')[2]
+            PORT_RECEPT = lista[5].split(' ')[1]
             os.system('chmod 777 mp32rtp')
             # Contenido del archivo de audio a ejecutar
             Primero_a_Ejecutar = './mp32rtp -i ' + IP_RECEPT + ' -p '
@@ -144,11 +145,12 @@ if __name__ == "__main__":
         elif lista == OK:
             print ("Recibido el OK")
         elif lista[0] == 'SIP/2.0 401 Unauthorized':
-            # MIRAR BIEN
+            # MIRAR BIEN # faltaaaaa     passsssw
             print("Hemos recibido 401 Unauthorized")
             m = hashlib.md5()
-            m.update(b(passwd) + b(nonce))
-            response = m.hexdigest()
+            Nonce = lista[1].split('=')[1]
+            m.update(bytes(Passwd + Nonce, 'utf-8'))
+            RESPONSE = m.hexdigest()
             Data_REGIST_NO_AUT(Line_Sip, UASERVER_PORT, USER_NAME, OPTION, Line)
 	        Line_Authorization = "Authorization: response="+ RESPONSE + "\r\n"
             LINE_REGIST = Line + Line_Authorization
