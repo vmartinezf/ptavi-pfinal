@@ -68,7 +68,7 @@ def Datos_Log(fichero, evento, ip, port, line):
     fich.close()
 
 
-def Response_INVITE(username, ipserver, port, message_send)   
+def Response_INVITE(username, ipserver, port, message_send):  
     message_send = b'SIP/2.0 100 Trying\r\n\r\n'
     message_send += b'SIP/2.0 180 Ring\r\n\r\n'
     message_send += b'SIP/2.0 200 OK\r\n\r\n'
@@ -161,17 +161,16 @@ if __name__ == "__main__":
         parser.parse(open(CONFIG))
         lista = cHandler.get_tags()
 
-        diccionario = lista[0]
         # Meto los valores del xml en variables
-        USER_NAME = diccionario['account']['username']
-        PASSWD = diccionario['account']['passwd']
-        UASERVER_IP = diccionario['uaserver']['ip']
-        UASERVER_PORT = diccionario['uaserver']['puerto']
-        PORT_AUDIO  = diccionario['rtpaudio']['puerto']
-        IP_PROXY = diccionario['regproxy']['ip']
-        PORT_PROXY = diccionario['regproxy']['puerto']
-        PATH_LOG = diccionario['log']['path']
-        PATH_AUDIO = diccionario['audio']['path']
+        USER_NAME = lista[0]['account']['username']
+        PASSWD = lista[0]['account']['passwd']
+        UASERVER_IP = lista[1]['uaserver']['ip']
+        UASERVER_PORT = lista[1]['uaserver']['puerto']
+        PORT_AUDIO  = lista[2]['rtpaudio']['puerto']
+        IP_PROXY = lista[3]['regproxy']['ip']
+        PORT_PROXY = lista[3]['regproxy']['puerto']
+        PATH_LOG = lista[4]['log']['path']
+        PATH_AUDIO = lista[5]['audio']['path']
 
         # Comprobación de si existe el archivo de audio
         if not os.path.exists(PATH_AUDIO):
