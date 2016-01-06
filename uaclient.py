@@ -15,13 +15,13 @@ from uaserver import XMLHandler
 from uaserver import Datos_Log
 
 
-def Data_REGIST_NO_AUT(Linea, Port, username, option, LINE):
+def Data_REG_NO_AUT(Linea, Port, username, option, LINE):
     Line_Register = username + ":" + Port + " SIP/2.0\r\n"
     Line_Expires = "Expires: " + option + "\r\n"
     LINE = Linea + Line_Register + Line_Expires
 
 
-def Data_INVITE(Linea, option, username, Port ,ip, LINE):
+def Data_INVITE(Linea, option, username, Port, ip, LINE):
     Line_Invite_sip = Linea + option + " SIP/2.0\r\n"
     Line_Content_Type = "Content-Type: application/sdp\r\n\r\n"
     Line_Version_Option = "v=0\r\n" + "o=" + username + " " + ip + " \r\n"
@@ -46,8 +46,8 @@ if __name__ == "__main__":
 
     try:
         if os.path.exists(CONFIG) is False:
-            sys.exit ("This name of file doesn´t exist")
-        
+            sys.exit("This name of file doesn´t exist")
+
         # Sacamos los datos del xml
         parser = make_parser()
         cHandler = XMLHandler()
@@ -60,36 +60,35 @@ if __name__ == "__main__":
         PASSWD = lista[0]['account']['passwd']
         UASERVER_IP = lista[1]['uaserver']['ip']
         UASERVER_PORT = lista[1]['uaserver']['puerto']
-        PORT_AUDIO  = lista[2]['rtpaudio']['puerto']
+        PORT_AUDIO = lista[2]['rtpaudio']['puerto']
         IP_PROXY = lista[3]['regproxy']['ip']
         PORT_PROXY = lista[3]['regproxy']['puerto']
         PATH_LOG = lista[4]['log']['path']
         PATH_AUDIO = lista[5]['audio']['path']
 
     except IndexError:
-	    sys.exit("Usage: python uaclient.py config method option")
+        sys.exit("Usage: python uaclient.py config method option")
 
-    try:     
+    try:
         lista_metodos = ['REGISTER', 'INVITE', 'BYE']
         if METHOD not in lista_metodos:
             print("Method have to be REGISTER, INVITE OR BYE")
-	        sys.exit("Usage: python uaclient.py config method option")
+            sys.exit("Usage: python uaclient.py config method option")
 
-        Line_Sip = METHOD + " sip:" 
+        Line_Sip = METHOD + " sip:"
         if METHOD == 'REGISTER':
             # Añadimos al  archivo log cuando comenzamos
             Event = ' Starting...'
             Datos_Log(PATH_LOG, Event, '', '', '')
             # Datos de envio del REGISTER sin Autentincación
-            Data_REGIST_NO_AUT(Line_Sip, UASERVER_PORT, USER_NAME, OPTION, LINE)
+            Data_REG_NO_AUT(Line_Sip, UASERVER_PORT, USER_NAME, OPTION, LINE)
         elif METHOD == 'INVITE':
             IP = UASERVER_IP
             Data_INVITE(Line_Sip, OPTION, USER_NAME, PORT_AUDIO, IP, LINE)
         elif METHOD == 'BYE':
-	        LINE = Line_Sip + Receptor + " SIP/2.0\r\n"
+            LINE = Line_Sip + Receptor + " SIP/2.0\r\n"
         else:
             sys.exit("This method is incorrect")
-
 
         # Creamos el socket, lo configuramos y lo atamos a un servidor/puerto
         my_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -124,7 +123,7 @@ if __name__ == "__main__":
             my_socket.send(bytes(LINEACK, 'utf-8') + b'\r\n')
             data = my_socket.recv(1024)
             # Escribimos en el log los datos que enviamos
-            Evento = ' Send to ' 
+            Evento = ' Send to '
             Datos_Log(PATH_LOG, Evento, IP_PROXY, PORT_PROXY, LINEACK)
 
             # RTP
@@ -158,13 +157,13 @@ if __name__ == "__main__":
             Nonce = lista[1].split('=')[1]
             m.update(bytes(PASSWD + Nonce, 'utf-8'))
             RESPONSE = m.hexdigest()
-            Data_REGIST_NO_AUT(Line_Sip, UASERVER_PORT, USER_NAME, OPTION, Line)
-            Line_Authorization = "Authorization: response="+ RESPONSE + "\r\n"
+            Data_REG_NO_AUT(Line_Sip, UASERVER_PORT, USER_NAME, OPTION, Line)
+            Line_Authorization = "Authorization: response=" + RESPONSE + "\r\n"
             LINE_REGIST = Line + Line_Authorization
             my_socket.send(bytes(LINE_REGIST, 'utf-8') + b'\r\n')
             print("Enviando: " + LINE_REGIST)
             # Escribimos en el log los datos que enviamos
-            Evento = ' Send to ' 
+            Evento = ' Send to '
             Datos_Log(PATH_LOG, Evento, IP_PROXY, PORT_PROXY, LINEREGIST)
         else:
             print("Hemos recibido un método incorrecto")
