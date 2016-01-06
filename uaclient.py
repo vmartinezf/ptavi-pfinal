@@ -72,6 +72,7 @@ if __name__ == "__main__":
     try:     
         lista_metodos = ['REGISTER', 'INVITE', 'BYE']
         if METHOD not in lista_metodos:
+            print("Method have to be REGISTER, INVITE OR BYE")
 	        sys.exit("Usage: python uaclient.py config method option")
 
         Line_Sip = METHOD + " sip:" 
@@ -107,6 +108,9 @@ if __name__ == "__main__":
         data_decod = data.decode('utf-8')
 
         print('Recibido -- ', data_decod)
+        # Escribimos el mensaje en el archivo de log el mensaje recibido
+        Evento = ' Received from '
+        Datos_Log(PATH_LOG, Evento, IP_PROXY, PORT_PROXY, data_decod)
         print("Terminando socket...")
 
         lista = data_decod.split('\r\n\r\n')[0:-1]
@@ -142,6 +146,12 @@ if __name__ == "__main__":
             Datos_Log(PATH_LOG, Event, '', '', '')
         elif lista == OK:
             print ("Recibido el OK")
+        elif lista == ['SIP/2.0 400 Bad Request']:
+            print("Hemos recibido 400 Bad Request\r\n")
+            sys.exit("Usage: python uaclient.py config method option")
+        elif lista == ['SIP/2.0 404 User Not Found Request']:
+            print("Error: 404 User not found")
+            sys.exit("Usage: User not Found")
         elif lista[0] == 'SIP/2.0 401 Unauthorized':
             print("Hemos recibido 401 Unauthorized")
             m = hashlib.md5()
