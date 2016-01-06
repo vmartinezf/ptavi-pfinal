@@ -11,6 +11,7 @@ import os.path
 from xml.sax import make_parser
 from xml.sax.handler import ContentHandler
 import hashlib
+import time
 
 
 # Creamos una clase XMLHandler de la misma forma que creamos una en la P3 para
