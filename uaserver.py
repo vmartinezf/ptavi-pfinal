@@ -69,7 +69,7 @@ def Datos_Log(fichero, evento, ip, port, line):
     fich.close()
 
 
-def Response_INVITE(username, ipserver, port, message_send):  
+def Response_INVITE(username, ipserver, port, message_send):
     message_send = b'SIP/2.0 100 Trying\r\n\r\n'
     message_send += b'SIP/2.0 180 Ring\r\n\r\n'
     message_send += b'SIP/2.0 200 OK\r\n\r\n'
@@ -100,13 +100,13 @@ class EchoHandler(socketserver.DatagramRequestHandler):
                 Datos_Log(PATH_LOG, Evento, IP_PROXY, PORT_PROXY, line_decod)
                 if METHOD == 'INVITE':
                     print("Nos ha llegado un INVITE")
-                    Response_INVITE(USER_NAME, UASERVER_IP, PORT_AUDIO, message)
+                    Response_INVITE(USER_NAME, UASERVER_IP, PORT_AUDIO, messg)
                     # Enviamos el mensaje de respuesta al INVITE
-                    self.wfile.write(message)
-                    print("Enviamos" + message)
+                    self.wfile.write(messg)
+                    print("Enviamos" + messg)
                     # Escribimos los mensages de envio en el log
                     Event = ' Send to '
-                    Datos_Log(PATH_LOG, Event, IP_PROXY, PORT_PROXY, message)
+                    Datos_Log(PATH_LOG, Event, IP_PROXY, PORT_PROXY, messg)
                 elif METHOD == 'ACK':
                     print("Nos ha llegado un ACK")
                     os.system('chmod 777 mp32rtp')
@@ -148,14 +148,14 @@ class EchoHandler(socketserver.DatagramRequestHandler):
 if __name__ == "__main__":
     # Creamos servidor de eco y escuchamos
     try:
-		# Archivo xml pasado como parámetro
+        # Archivo xml pasado como parámetro
         CONFIG = sys.argv[1]
 
         # Comprobación de si existe el fichero pasado como parámetro
         if os.path.exists(CONFIG) is False:
-        	sys.exit("This name of file doesn´t exist")
+            sys.exit("This name of file doesn´t exist")
 
-		# Saco el contenido del fichero xml
+        # Saco el contenido del fichero xml
         parser = make_parser()
         cHandler = XMLHandler()
         parser.setContentHandler(cHandler)
@@ -167,7 +167,7 @@ if __name__ == "__main__":
         PASSWD = lista[0]['account']['passwd']
         UASERVER_IP = lista[1]['uaserver']['ip']
         UASERVER_PORT = lista[1]['uaserver']['puerto']
-        PORT_AUDIO  = lista[2]['rtpaudio']['puerto']
+        PORT_AUDIO = lista[2]['rtpaudio']['puerto']
         IP_PROXY = lista[3]['regproxy']['ip']
         PORT_PROXY = lista[3]['regproxy']['puerto']
         PATH_LOG = lista[4]['log']['path']
@@ -175,7 +175,7 @@ if __name__ == "__main__":
 
         # Comprobación de si existe el archivo de audio
         if not os.path.exists(PATH_AUDIO):
-           sys.exit("This name of file os audio doesn´t exist")
+            sys.exit("This name of file os audio doesn´t exist")
 
     except IOError:
         sys.exit("Usage: python uaserver.py config")
