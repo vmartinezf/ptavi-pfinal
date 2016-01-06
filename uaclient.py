@@ -13,7 +13,6 @@ from xml.sax.handler import ContentHandler
 import hashlib
 from uaserver import XMLHandler
 from uaserver import Datos_Log
-from proxy_registrar import XMLHandler_Proxy
 
 
 def Data_REGIST_NO_AUT(Linea, Port, username, option, LINE):
@@ -24,12 +23,12 @@ def Data_REGIST_NO_AUT(Linea, Port, username, option, LINE):
 
 def Data_INVITE(Linea, option, username, Port ,ip, LINE):
     Line_Invite_sip = Linea + option + " SIP/2.0\r\n"
-	Line_Content_Type = "Content-Type: application/sdp\r\n\r\n"
-	Line_Version_Option = "v=0\r\n" + "o=" + username + " " + ip + " \r\n"
-	Line_Session_T = "s=misesion\r\n" + "t=0\r\n"
-	Line_Audio = "m=audio " + Port + " RTP\r\n"
-	LINE = Line_Invite_sip + Line_Content_Type + Line_Version_Option
-	LINE += Line_Session_T + Line_Audio
+    Line_Content_Type = "Content-Type: application/sdp\r\n\r\n"
+    Line_Version_Option = "v=0\r\n" + "o=" + username + " " + ip + " \r\n"
+    Line_Session_T = "s=misesion\r\n" + "t=0\r\n"
+    Line_Audio = "m=audio " + Port + " RTP\r\n"
+    LINE = Line_Invite_sip + Line_Content_Type + Line_Version_Option
+    LINE += Line_Session_T + Line_Audio
 
 
 # Cliente UDP simple Sip.
@@ -39,23 +38,22 @@ if __name__ == "__main__":
         sys.exit("Usage: python uaclient.py config method option")
     try:
         CONFIG = sys.argv[1]
-        MeTHOD1 = sys.argv[2]
+        METHOD1 = sys.argv[2]
         METHOD = METHOD1.upper()
         OPTION = sys.argv[3]
     except:
         sys.exit("Usage: python uaclient.py config method option")
-    if PORT < 1024:
-        sys.exit("ERROR: PORT IS INCORRECT")
 
     try:
-	    if os.path.exists(CONFIG) is False:
-        	sys.exit ("This name of file doesn´t exist")
+        if os.path.exists(CONFIG) is False:
+            sys.exit ("This name of file doesn´t exist")
+        
         # Sacamos los datos del xml
-	    parser = make_parser()
+        parser = make_parser()
         cHandler = XMLHandler()
         parser.setContentHandler(cHandler)
         parser.parse(open(CONFIG))
-	    lista = cHandler.get_tags()
+        lista = cHandler.get_tags()
 
         # Meto los valores del xml en variables
         USER_NAME = lista[0]['account']['username']
@@ -145,14 +143,13 @@ if __name__ == "__main__":
         elif lista == OK:
             print ("Recibido el OK")
         elif lista[0] == 'SIP/2.0 401 Unauthorized':
-            # MIRAR BIEN # faltaaaaa     passsssw
             print("Hemos recibido 401 Unauthorized")
             m = hashlib.md5()
             Nonce = lista[1].split('=')[1]
-            m.update(bytes(Passwd + Nonce, 'utf-8'))
+            m.update(bytes(PASSWD + Nonce, 'utf-8'))
             RESPONSE = m.hexdigest()
             Data_REGIST_NO_AUT(Line_Sip, UASERVER_PORT, USER_NAME, OPTION, Line)
-	        Line_Authorization = "Authorization: response="+ RESPONSE + "\r\n"
+            Line_Authorization = "Authorization: response="+ RESPONSE + "\r\n"
             LINE_REGIST = Line + Line_Authorization
             my_socket.send(bytes(LINE_REGIST, 'utf-8') + b'\r\n')
             print("Enviando: " + LINE_REGIST)
