@@ -95,7 +95,7 @@ class SIPProxyRegisterHandler(socketserver.DatagramRequestHandler):
                         print("Enviamos" + messg)
                         # Escribimos los mensages de envio en el log
                         Event = ' Send to '
-                        Datos_Log(PATH_LOG, Event, IP_UA, Port_UA, mssg)
+                        Datos_Log(PATH_LOG, Event, Ip, Port_UA, mssg)
                     else len(lista) == 3: #MIRAR
                         Passwd_Nonce = lista[2].split('response=')[1]
                         Passwd = Passwd_Nonce - NONCE
@@ -122,6 +122,31 @@ class SIPProxyRegisterHandler(socketserver.DatagramRequestHandler):
                     #MIRRRAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAR
                     self.register2json()
                 elif METHOD == 'INVITE':
+                    # Comprobación de si el usuario está registrado o no
+                    Usuario_Registro = register2registered(direction_UA)
+                    if Usuario_Registro == 0:
+                        messg = "SIP/2.0 404 User Not Found\r\n\r\n"
+                        self.wfile.write(messg)
+                        print("Mensaje de usuario no registrado")
+                        # Ecribimos los datos que se envian en el log
+                        Event = ' Send to '
+                        Datos_Log(PATH_LOG, Event, Ip, puerto, messg)
+                    else:
+                        print("Mensaje de usuario registrado")
+                        # Imprimimos los datos del usuario registrado
+                        print(Usuario_Registro)
+                        # Datos de la ip y puerto del usuario registrado
+                        Ip_Registred = Usuario_Registro[0]
+                        Port_Registred = int(Usuario_Registro[1])
+
+                        # Abrimos un socket para reeenviar el INVITE a la
+                        # direccion que va dirigido
+                        my_socket = socket.socket(socket.AF_INET,
+                                                socket.SOCK_DGRAM)
+                        my_socket.setsockopt(socket.SOL_SOCKET,
+                                                socket.SO_REUSEADDR, 1)
+                        my_socket.connect((Ip_Registred, iPort_Registred))
+
                 elif METHOD == 'ACK':
                 elif METHOD == 'BYE':
                 elif METHOD not in METHODS:
