@@ -54,21 +54,30 @@ class SIPProxyRegisterHandler(socketserver.DatagramRequestHandler):
     Echo proxy class
     """
 
-    dicc = {}
+    dicc_client = {}
 
     def handle(self):
-        # Escribe dirección y puerto del cliente (de tupla client_address)
-        self.json2registered()
-        dicc_usuarios = {}
-        client_infor = self.client_address
+        # Comprobación de que esté creado el archivo txt
+        self.txt2registered()
+
+        # Actualizamos el diccionario de clientes por si ha caducado el Espires
+        # de algún cliente
+        self.Time_Caduced()
+
         while 1:
             # Leyendo línea a línea lo que nos envía el cliente
             line = self.rfile.read()
             line_decod = line.decode('utf-8')
             print("El cliente nos manda " + line_decod)
             METHOD = line_decod.split(' ')[0].upper()
+            # Métodos permitidos
             METHODS = ['REGISTER', 'INVITE', 'BYE', 'ACK']
-            IP_UA = '127.0.0.1'
+            # La IP y el Puerto de quien recivimos el mensaje
+            Ip = self.client_addres[0]
+            Puerto = self.client_addres[1]
+            # Escribimos mensages de recepción en el fichero de log
+            Evento = ' Received from '
+            Datos_Log(PATH_LOG, Evento, Ip, Puerto, line_decod)
             if len(line_decod) >= 2:
                 if METHOD  == 'REGISTER':
                     lista = line_decod.split('\r\n')
@@ -106,9 +115,6 @@ class SIPProxyRegisterHandler(socketserver.DatagramRequestHandler):
                             # Escribimos los mensages de envio en el log
                             Event = ' Send to '#mirar ip y port y cambiar
                             Datos_Log(PATH_LOG, Event, IP_UA, Port_UA, messg)
-                    # FALTA MIRAROS BIEN
-                    regist(line_decod, dicc_usuarios, self.dicc, client_infor)
-                    self.wfile.write(mssg_send)
                     # Escribimos en el log el mensage enviado
                     Event = ' Send to '
                     # CAMBIAR LOS DATOS DEL LOG IP Y PORT
@@ -141,7 +147,7 @@ class SIPProxyRegisterHandler(socketserver.DatagramRequestHandler):
         lines = fich.readlines()
         for line in range(len(lines)):
             User = lines[line].split(' ')[1]
-            Password = lines[line].split(' ')[3]
+            Password = lines[line].split(' ')[4]
             if User == User_agent:
                 if Password == Passwd:
                     print("Contraseña correcta, acceso permitido")
