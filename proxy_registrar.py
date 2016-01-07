@@ -47,49 +47,6 @@ class XMLHandler_Proxy(ContentHandler):
         los atributos y su contenido
         """
         return self.lista_etiquetas
-        
-
-def Check_Password(Path, Passwd, User_agent, Found):
-    Found = 'False'
-    fich = open(Path, 'r')
-    lines = fich.readlines()
-    for line in range(len(lines)):
-        User = lines[line].split(' ')[1]
-        Password = lines[line].split(' ')[3]
-        if User == User_agent:
-            if Password == Passwd:
-                print("Contraseña correcta, acceso permitido")
-                Found = 'True'
-            else:
-                print("Acceso denegado: password is incorrect")
-                message = b'Acceso denegado: password is incorrect\r\n\r\n'
-                self.wfile.write(message)
-    fich.close()
-
-
-def regist(line_decod, dicc_usuarios, dicc, client_infor):#MIRARRARRRA
-    """
-    Función de registro de usuarios
-    """
-    sip = line_decod.split()[1]
-    direction = sip.split('sip:')[1]
-    expiration = int(line_decod.split()[4])
-    expires = int(time.time()) + expiration
-    dicc_usuarios["address"] = client_infor[0]
-    time_now = time.strftime('%Y­%m­%d %H:%M:%S',
-                             time.gmtime(time.time()))
-    time_now1 = time_now.split('\u00ad')[0] + '-'
-    time_now2 = time_now1 + time_now.split('\u00ad')[1] + '-'
-    time_now3 = time_now2 + time_now.split('\u00ad')[2]
-    dicc_usuarios["expires"] = time_now3 + ' + ' + str(expiration)
-    if expiration == 0:
-        if direction in dicc:
-            del dicc[direction]
-    elif '@' in direction:
-        dicc[direction] = dicc_usuarios
-    for usuario in dicc:
-        if int(time.time()) > expires:
-            del dicc[direction]
 
 
 class SIPProxyRegisterHandler(socketserver.DatagramRequestHandler):
@@ -111,12 +68,13 @@ class SIPProxyRegisterHandler(socketserver.DatagramRequestHandler):
             print("El cliente nos manda " + line_decod)
             METHOD = line_decod.split(' ')[0].upper()
             METHODS = ['REGISTER', 'INVITE', 'BYE', 'ACK']
+            IP_UA = '127.0.0.1'
             if len(line_decod) >= 2:
                 if METHOD  == 'REGISTER':
                     lista = line_decod.split('\r\n')
                     Client = lista[0].split(':')[1]
                     lista0 = lista[0].split(':')[2]
-                    Port_Client = lista0.split(' ')[0]
+                    Port_UA = lista0.split(' ')[0]
                     NONCE = random.getrandbits(898989898798989898989)
                     # MIRAR EL LOG
                     if len(lista) == 2:
@@ -127,17 +85,27 @@ class SIPProxyRegisterHandler(socketserver.DatagramRequestHandler):
                         self.wfile.write(messg)
                         print("Enviamos" + messg)
                         # Escribimos los mensages de envio en el log
-                        Event = ' Send to '#mirar la ip y el port de envio
-                        Datos_Log(PATH_LOG, Event, IP_PROXY, PORT_PROXY, mssg)
+                        Event = ' Send to '
+                        Datos_Log(PATH_LOG, Event, IP_UA, Port_UA, mssg)
                     else len(lista) == 3: #MIRAR
                         Passwd_Nonce = lista[2].split('response=')[1]
                         Passwd = Passwd_Nonce - NONCE
-                        Check_Password(DATA_PASSWDPATH, Passwd, Client, Found)
+                        self.CheckPsswd(DATA_PASSWDPATH, Passwd, Client, Found)
                         if Found:
+                            try:
+                                Expires = lista[2].split(' ')[1]
+                                if Expires == '0':
+                                    Event = ' Borrando ' + Client
+                                    Datos_Log(PATH_LOG, Event, '', '', '')
+                            except:
+                                Error_Entero = "No es un entero"
+                                self.wfile.write(Error_Entero)
+                                print(Error_Entero)
+                                break
                             messg = b"SIP/2.0 200 OK\r\n\r\n"
                             # Escribimos los mensages de envio en el log
                             Event = ' Send to '#mirar ip y port y cambiar
-                            Datos_Log(PATH_LOG, Event, IP_PROXY, PORT_PROXY, messg)
+                            Datos_Log(PATH_LOG, Event, IP_UA, Port_UA, messg)
                     # FALTA MIRAROS BIEN
                     regist(line_decod, dicc_usuarios, self.dicc, client_infor)
                     self.wfile.write(mssg_send)
@@ -154,8 +122,9 @@ class SIPProxyRegisterHandler(socketserver.DatagramRequestHandler):
                     print("Nos ha llegado un método desconocido")
                     mssg_send = b'SIP/2.0 405 Method Not Allowed\r\n\r\n'
                     self.wfile.write(message_send)
+                    # Escribimos en el log el mensaje de envío 405
                     Event = ' Send to '
-                    Datos_Log(PATH_LOG, Event, IP_PROXY, PORT_PROXY, mssg_send)
+                    Datos_Log(PATH_LOG, Event, IP_UA, PORT_PROXY, mssg_send)
                 else:
                     # Respuesta mal formada
                     self.wfile.write(b"SIP/2.0 400 Bad Request\r\n\r\n")
@@ -165,30 +134,89 @@ class SIPProxyRegisterHandler(socketserver.DatagramRequestHandler):
             if not line:
                 break
 
-    def register2json(self):
-        """
-        Registro de usuarios en un fichero json
-        """
-        fichero_json = json.dumps(self.dicc)
-        with open('registered.json', 'w') as fichero_json:
-            json.dump(self.dicc, fichero_json, sort_keys=True, indent=4)#MIRRAAAAAR
+            
+    def CheckPsswd(self, Path, Passwd, User_agent, Found):
+        Found = 'False'
+        fich = open(Path, 'r')
+        lines = fich.readlines()
+        for line in range(len(lines)):
+            User = lines[line].split(' ')[1]
+            Password = lines[line].split(' ')[3]
+            if User == User_agent:
+                if Password == Passwd:
+                    print("Contraseña correcta, acceso permitido")
+                    Found = 'True'
+                else:
+                    print("Acceso denegado: password is incorrect")
+                    message = b'Acceso denegado: password is incorrect\r\n\r\n'
+                    self.wfile.write(message)
+        fich.close()
 
-    def json2registered(self):#MIRARRR Y CAMBIAR TXT
+
+    def register2txt(self):
+        """
+        Función de registro de usuarios en el archivo database.txt
+        """
+        fich = open(DATABASE_PATH, "w")
+        Linea = "Usuario\tIP\tPuerto\t" + "Fecha de Registro\t" 
+        Linea += "Tiempo de expiracion\r\n"
+        fich.write(Linea)
+        for Client in self.dicc_client:
+            Ip = self.dicc_client[Client][0]
+            Port = self.dicc_client[Client][1]
+            Fecha_Registro = self.dic_clientes[Client][2]
+            Expiration = self.dic_clientes[Client][3]
+            Line = Client + "\t" + Ip + "\t" + str(Port) + "\t"
+            Line += str(Fecha_Registro) + "\t\t" + str(Expiration) + "\r\n"
+            fich.write(Line)
+        fich.close()
+
+
+    def register2registered(self, client):
+    """
+    Función para ver si un usuario está registrado, nos devuelve 0 si el
+    usuario no está registrado con ninguna de las claves, en caso cotrario se
+    devuelven los datos del cliente
+    """
+    if Client not in self.dicc_client.keys():
+        datos = '0'
+    else
+        datos self.dicc_client[Client]
+    return datos
+
+
+    def txt2registered(self):
         """
         Comprobar la existencia del fichero json y se actua en función
         de si existe o no
         """
-        fichero_json = 'registered.json'
+        fichero_txt = DATABASE_PATH 
         try:
-            self.dicc = json.loads(open(fichero_json).read())
+            self.dicc = txt.loads(open(DATABASE_PATH).read())
         except:
             self.dicc = {}
+
+
+    def Time_Caduced(self):
+    """
+    Función para actualizar el diccionario, elimina cientes que tengan el
+    Expires caducado
+    """
+    for Client in self.dicc_client:
+        # Imprimimos el diccionario de clientes
+        print(self.dicc_client)
+        Expiration = int(self.dicc_client[Client][3]) 
+        Time_now = int(time.time()) 
+        if Time_now >= Expiration:
+            print("Borramos el cliente: ", Client)
+            del self.dicc_client[Client]
 
 
 if __name__ == "__main__":
     try:
     	CONFIG = int(sys.argv[1])
-
+        if len(sys.argv) != 2:
+            sys.exit("Usage: python proxy_registrar.py config")
         # Comprobación de si existe el fichero pasado como parámetro
         if os.path.exists(CONFIG) is False:
         	sys.eit("This name of file doesn´t exist")
@@ -219,7 +247,8 @@ if __name__ == "__main__":
         # Meto en el log el mensaje de starting...
         Event = ' Starting...'
         Datos_Log(PATH_LOG, Event, '', '', '')
-        serv = socketserver.UDPServer(("", PORT), EchoHandler)
+        IP = '127.0.0.1'
+        serv = socketserver.UDPServer((IP, PORT), SIPProxyRegisterHandler)
         print("Listening...")
         serv.serve_forever()
     except:
