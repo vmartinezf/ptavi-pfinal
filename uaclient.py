@@ -158,7 +158,7 @@ if __name__ == "__main__":
             # Escribimos en el log los datos que enviamos
             Evento = ' Send to '
             Datos_Log(PATH_LOG, Evento, IP_PROXY, PORT_PROXY, LINEREGIST)
-        elsif lista != OK:
+        elif lista != OK:
             # Escribimos en el log el mensaje de error
             Evento = 'Error: Method incorrect'
             Datos_Log(PATH_LOG, Evento, '', '', '')
