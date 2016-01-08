@@ -117,7 +117,7 @@ if __name__ == "__main__":
         Ring = 'SIP/2.0 180 Ring'
         OK = 'SIP/2.0 200 OK'
         if lista[0:3] == [Trying, Ring, OK]:
-            LINEACK = "ACK" + " sip:" + Receptor + " SIP/2.0\r\n"
+            LINEACK = "ACK" + " sip:" + OPTION + " SIP/2.0\r\n"
             print("Enviando: " + LINEACK)
             my_socket.send(bytes(LINEACK, 'utf-8') + b'\r\n')
             data = my_socket.recv(1024)
