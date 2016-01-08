@@ -57,11 +57,12 @@ class XMLHandler_Proxy(ContentHandler):
         my_socket.connect((Ip, Port))
         my_socket.send(Line)
         # Escribimos el mensaje de envio en el archivo de log
+        Puerto = str(Port)
         Event = ' Send to '
         Datos_Log(PATH_LOG, Event, Ip, Puerto, Line)
 
 
-    def Conexion_Segura(Port, Ip, Line):
+    def Conexion_Segura(Path, Port, Ip, data_decod):
         Puerto = str(Port)
         try:
             data = my_socket.recv(1024)
@@ -72,7 +73,7 @@ class XMLHandler_Proxy(ContentHandler):
         except:
             # Escribimos en el log el mensaje de error
             Event = 'Error'
-            Datos_Log(PATH_LOG, Event, Ip, Puerto, '')
+            Datos_Log(Path, Event, Ip, Puerto, '')
             Error = ip + "Port" + port + '\r\n'
             sys.exit("Error: No server listening at " + Error)
 
@@ -209,19 +210,22 @@ class SIPProxyRegisterHandler(socketserver.DatagramRequestHandler):
                     # diferente forma
                     if Usuario_Registro == 0:
                         User_Not_Found(PATH_LOG, Puerto, Ip, messg)
-                        self.wfile.write(messg)
+                        self.wfile.write(bytes(messg, 'utf-8'))
                     else:
                         # Datos de la ip y puerto del usuario registrado
                         Ip_Regist = Usuario_Registro[0]
-                        Port_R = int(Usuario_Registro[1])
+                        Port_Regist = int(Usuario_Registro[1])
 
                         # Abrimos un socket y enviamos
-                        self.Open_Socket(PATH_LOG, Ip_Regist, Port_R, line)
+                        Open_Socket(PATH_LOG, Ip_Regist, Port_Regist, line)
                         # Miramos que la conexión sea segura y se envían datos
                         # o se hace sys.exit en función de la conexión
-                        self.Conexion_Segura(Port_R, Ip_Regist, line)
+                        Conexion_Segura(PATH_LOG, Port_Regist, Ip_Regist, data)
                         # Si hay un server escuchando seguimos y enviamos
-                        self.wfile.write(line) 
+                        self.wfile.write(bytes(data, 'utf-8'))
+                        # Escribimos en el log el mensage enviado
+                        Event = ' Send to '
+                        Datos_Log(PATH_LOG, Event, Ip, Puerto, data)
 
                 elif METHOD == 'ACK':
                     Sip_direccion = line_decod.split(' ')[1]
@@ -230,22 +234,52 @@ class SIPProxyRegisterHandler(socketserver.DatagramRequestHandler):
                     Usuario_Registro = register2registered(dicc_client, dir_UA)
                     if Usuario_Registro == 0:
                         User_Not_Found(PATH_LOG, Puerto, Ip, messg)
-                        self.wfile.write(messg)
+                        self.wfile.write(bytes(messg, 'utf-8'))
                     else:
-                        # CONTINUAARRRR
+                        # Datos de la ip y puerto del usuario registrado
+                        Ip_Regist = Usuario_Registro[0]
+                        Port_Regist = int(Usuario_Registro[1])
+
                         # Abrimos un socket y enviamos
-                        self.Open_Socket(PATH_LOG, Ip_Regist, Port_R, line)
+                        Open_Socket(PATH_LOG, Ip_Regist, Port_Regist, line)
 
                 elif METHOD == 'BYE':
+                    Sip_direccion = line_decod.split(' ')[1]
+                    dir_UA = Sip_direccion.split(':')[1]
+                    # Comprobación de si el usuario está registrado o no
+                    Usuario_Registro = register2registered(dicc_client, dir_UA)
+                    if Usuario_Registro == 0:
+                        User_Not_Found(PATH_LOG, Puerto, Ip, messg)
+                        self.wfile.write(bytes(messg, 'utf-8')) 
+                    else:
+                        # Datos de la ip y puerto del usuario registrado
+                        Ip_Regist = Usuario_Registro[0]
+                        Port_Regist = int(Usuario_Registro[1])
+                        
+                        # Abrimos un socket y enviamos
+                        Open_Socket(PATH_LOG, Ip_Regist, Port_Regist, line)
+                        # Miramos que la conexión sea segura y se envían datos
+                        # o se hace sys.exit en función de la conexión
+                        Conexion_Segura(PATH_LOG, Port_Regist, Ip_Regist, data)
+                        # Si hay un server escuchando seguimos y enviamos
+                        self.wfile.write(bytes(data, 'utf-8'))
+                        # Escribimos en el log el mensage enviado
+                        Event = ' Send to '
+                        Datos_Log(PATH_LOG, Event, Ip, Puerto, data)
+                    
                 elif METHOD not in METHODS:
                     mssg_send = b'SIP/2.0 405 Method Not Allowed\r\n\r\n'
-                    self.wfile.write(message_send)
+                    self.wfile.write(mssg_send)
                     # Escribimos en el log el mensaje de envío 405
                     Event = ' Send to '
-                    Datos_Log(PATH_LOG, Event, IP_UA, PORT_PROXY, mssg_send)
+                    Datos_Log(PATH_LOG, Event, Ip, Puerto, mssg_send)
                 else:
                     # Respuesta mal formada
-                    self.wfile.write(b"SIP/2.0 400 Bad Request\r\n\r\n")
+                    mssg_send = b"SIP/2.0 400 Bad Request\r\n\r\n"
+                    self.wfile.write(mssg_send)
+                    # Escribimos en el log el mensaje de envío 405
+                    Event = ' Send to '
+                    Datos_Log(PATH_LOG, Event, Ip, Puerto, mssg_send)
 
             # Si no hay más líneas salimos del bucle infinito
             if not line:
