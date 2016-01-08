@@ -117,7 +117,6 @@ if __name__ == "__main__":
         Ring = 'SIP/2.0 180 Ring'
         OK = 'SIP/2.0 200 OK'
         if lista[0:3] == [Trying, Ring, OK]:
-            print("Hemos recibido Trying, Ring y OK")
             LINEACK = "ACK" + " sip:" + Receptor + " SIP/2.0\r\n"
             print("Enviando: " + LINEACK)
             my_socket.send(bytes(LINEACK, 'utf-8') + b'\r\n')
@@ -134,7 +133,6 @@ if __name__ == "__main__":
             Primero_a_Ejecutar = './mp32rtp -i ' + IP_RECEPT + ' -p '
             Segundo_a_Ejecutar = str(PORT_RECEPT) + '<' + PATH_AUDIO
             aEjecutar = Primero_a_Ejecutar + Segundo_a_Ejecutar
-            print('Se está ejecutando el RTP')
             # Escribimos el mensage de comienzo RTP en el log
             Event = ' Terminando el envío RTP '
             Datos_Log(PATH_LOG, Event, '', '', '')
@@ -143,16 +141,11 @@ if __name__ == "__main__":
             # Escribimos el mensage de fin RTP en el log
             Event = ' Terminando el envío RTP '
             Datos_Log(PATH_LOG, Event, '', '', '')
-        elif lista == OK:
-            print ("Recibido el OK")
         elif lista == ['SIP/2.0 400 Bad Request']:
-            print("Hemos recibido 400 Bad Request\r\n")
             sys.exit("Usage: python uaclient.py config method option")
         elif lista == ['SIP/2.0 404 User Not Found Request']:
-            print("Error: 404 User not found")
             sys.exit("Usage: User not Found")
         elif lista[0] == 'SIP/2.0 401 Unauthorized':
-            print("Hemos recibido 401 Unauthorized")
             m = hashlib.md5()
             Nonce = lista[1].split('=')[1]
             m.update(bytes(PASSWD + Nonce, 'utf-8'))
@@ -165,8 +158,7 @@ if __name__ == "__main__":
             # Escribimos en el log los datos que enviamos
             Evento = ' Send to '
             Datos_Log(PATH_LOG, Evento, IP_PROXY, PORT_PROXY, LINEREGIST)
-        else:
-            print("Hemos recibido un método incorrecto")
+        elsif lista != OK:
             # Escribimos en el log el mensaje de error
             Evento = 'Error: Method incorrect'
             Datos_Log(PATH_LOG, Evento, '', '', '')
