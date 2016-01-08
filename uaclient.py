@@ -86,7 +86,7 @@ if __name__ == "__main__":
             IP = UASERVER_IP
             Data_INVITE(Line_Sip, OPTION, USER_NAME, PORT_AUDIO, IP, LINE)
         elif METHOD == 'BYE':
-            LINE = Line_Sip + Receptor + " SIP/2.0\r\n"
+            LINE = Line_Sip + OPTION + " SIP/2.0\r\n"
         else:
             sys.exit("This method is incorrect")
 
