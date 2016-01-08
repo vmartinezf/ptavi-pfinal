@@ -49,6 +49,87 @@ class XMLHandler_Proxy(ContentHandler):
         return self.lista_etiquetas
 
 
+    def Open_Socket(Path, Ip, Port, Line):
+        # Abrimos un socket para reeenviar el mensaje a la
+        # direccion que va dirigido
+        my_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        my_socket.setsockopt(socket.SOL_SOCKET,  socket.SO_REUSEADDR, 1)
+        my_socket.connect((Ip, Port))
+        my_socket.send(Line)
+        # Escribimos el mensaje de envio en el archivo de log
+        Event = ' Send to '
+        Datos_Log(PATH_LOG, Event, Ip, Puerto, Line)
+
+
+    def Conexion_Segura(Port, Ip, Line):
+        Puerto = str(Port)
+        try:
+            data = my_socket.recv(1024)
+            data_decod = data.decode('utf-8')
+            # Escribimos mensages de recepción en el fichero de log
+            Evento = ' Received from '
+            Datos_Log(PATH_LOG, Evento, Ip, Puerto, data_decod)
+        except:
+            # Escribimos en el log el mensaje de error
+            Event = 'Error'
+            Datos_Log(PATH_LOG, Event, Ip, Puerto, '')
+            Error = ip + "Port" + port + '\r\n'
+            sys.exit("Error: No server listening at " + Error)
+
+
+    def User_Not_Found(Path, Puerto, Ip, messg):
+        messg = "SIP/2.0 404 User Not Found\r\n\r\n"
+        print("Enviamos " + messg)
+        # Ecribimos los datos que se envian en el log
+        Event = ' Send to '
+        Datos_Log(Path, Event, Ip, Puerto, messg)
+
+
+    def register2txt(Path, dicc_client):
+        """
+        Función de registro de usuarios en el archivo database.txt
+        """
+        fich = open(Path, "w")
+        Linea = "Usuario\tIP\tPuerto\t" + "Fecha de Registro\t" 
+        Linea += "Tiempo de expiracion\r\n"
+        fich.write(Linea)
+        for Client in dicc_client:
+            Ip = dicc_client[Client][0]
+            Port = dicc_client[Client][1]
+            Fecha_Registro = dic_clientes[Client][2]
+            Expiration = dic_clientes[Client][3]
+            Line = Client + "\t" + Ip + "\t" + str(Port) + "\t"
+            Line += str(Fecha_Registro) + "\t\t" + str(Expiration) + "\r\n"
+            fich.write(Line)
+        fich.close()
+
+
+    def register2registered(dicc_client, Client):
+    """
+    Función para ver si un usuario está registrado, nos devuelve 0 si el
+    usuario no está registrado con ninguna de las claves, en caso cotrario se
+    devuelven los datos del cliente
+    """
+    if Client not in dicc_client.keys():
+        datos = '0'
+    else
+        datos dicc_client[Client]
+    return datos
+
+
+    def Time_Caduced(dicc_client):
+    """
+    Función para actualizar el diccionario, elimina cientes que tengan el
+    Expires caducado
+    """
+    for Client in dicc_client:
+        Expiration = int(dicc_client[Client][3]) 
+        Time_now = int(time.time()) 
+        if Time_now >= Expiration:
+            print("Borramos el cliente: ", Client)
+            del dicc_client[Client]
+
+
 class SIPProxyRegisterHandler(socketserver.DatagramRequestHandler):
     """
     Echo proxy class
@@ -62,7 +143,7 @@ class SIPProxyRegisterHandler(socketserver.DatagramRequestHandler):
 
         # Actualizamos el diccionario de clientes por si ha caducado el Espires
         # de algún cliente
-        self.Time_Caduced()
+        Time_Caduced(dicc_client)
 
         while 1:
             # Leyendo línea a línea lo que nos envía el cliente
@@ -119,35 +200,41 @@ class SIPProxyRegisterHandler(socketserver.DatagramRequestHandler):
                     Event = ' Send to '
                     # CAMBIAR LOS DATOS DEL LOG IP Y PORT
                     Datos_Log(PATH_LOG, Event, IP_PROXY, PORT_PROXY, mssg_send)
-                    #MIRRRAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAR
-                    self.register2json()
                 elif METHOD == 'INVITE':
                     Sip_direccion = line_decod.split(' ')[1]
-                    direction_UA = Sip_direccion.split(':')[1]
+                    dir_UA = Sip_direccion.split(':')[1]
                     # Comprobación de si el usuario está registrado o no
-                    Usuario_Registro = register2registered(direction_UA)
+                    Usuario_Registro = register2registered(dicc_client, dir_UA)
                     # En función de si está registrado o no actuamos de
                     # diferente forma
                     if Usuario_Registro == 0:
-                        User_Not_Found(Puerto, Ip)
+                        User_Not_Found(PATH_LOG, Puerto, Ip, messg)
+                        self.wfile.write(messg)
                     else:
                         # Datos de la ip y puerto del usuario registrado
                         Ip_Regist = Usuario_Registro[0]
-                        Port_Regist = int(Usuario_Registro[1])
+                        Port_R = int(Usuario_Registro[1])
 
-                        # Abrimos un socket
-                        self.Open_Socket(Ip_Regist, Port_Regist, line)
+                        # Abrimos un socket y enviamos
+                        self.Open_Socket(PATH_LOG, Ip_Regist, Port_R, line)
                         # Miramos que la conexión sea segura y se envían datos
                         # o se hace sys.exit en función de la conexión
-                        self.Conexion_Segura(Port_Regist, Ip_Regist, line)  
+                        self.Conexion_Segura(Port_R, Ip_Regist, line)
+                        # Si hay un server escuchando seguimos y enviamos
+                        self.wfile.write(line) 
 
                 elif METHOD == 'ACK':
                     Sip_direccion = line_decod.split(' ')[1]
-                    direction_UA = Sip_direccion.split(':')[1] 
+                    dir_UA = Sip_direccion.split(':')[1] 
                     # Comprobación de si el usuario está registrado o no
-                    Usuario_Registro = register2registered(direction_UA)
+                    Usuario_Registro = register2registered(dicc_client, dir_UA)
                     if Usuario_Registro == 0:
-                        User_Not_Found(Puerto, Ip)
+                        User_Not_Found(PATH_LOG, Puerto, Ip, messg)
+                        self.wfile.write(messg)
+                    else:
+                        # CONTINUAARRRR
+                        # Abrimos un socket y enviamos
+                        self.Open_Socket(PATH_LOG, Ip_Regist, Port_R, line)
 
                 elif METHOD == 'BYE':
                 elif METHOD not in METHODS:
@@ -174,45 +261,11 @@ class SIPProxyRegisterHandler(socketserver.DatagramRequestHandler):
             Password = lines[line].split(' ')[4]
             if User == User_agent:
                 if Password == Passwd:
-                    print("Contraseña correcta, acceso permitido")
                     Found = 'True'
                 else:
-                    print("Acceso denegado: password is incorrect")
                     message = b'Acceso denegado: password is incorrect\r\n\r\n'
                     self.wfile.write(message)
         fich.close()
-
-
-    def register2txt(self):
-        """
-        Función de registro de usuarios en el archivo database.txt
-        """
-        fich = open(DATABASE_PATH, "w")
-        Linea = "Usuario\tIP\tPuerto\t" + "Fecha de Registro\t" 
-        Linea += "Tiempo de expiracion\r\n"
-        fich.write(Linea)
-        for Client in self.dicc_client:
-            Ip = self.dicc_client[Client][0]
-            Port = self.dicc_client[Client][1]
-            Fecha_Registro = self.dic_clientes[Client][2]
-            Expiration = self.dic_clientes[Client][3]
-            Line = Client + "\t" + Ip + "\t" + str(Port) + "\t"
-            Line += str(Fecha_Registro) + "\t\t" + str(Expiration) + "\r\n"
-            fich.write(Line)
-        fich.close()
-
-
-    def register2registered(self, client):
-    """
-    Función para ver si un usuario está registrado, nos devuelve 0 si el
-    usuario no está registrado con ninguna de las claves, en caso cotrario se
-    devuelven los datos del cliente
-    """
-    if Client not in self.dicc_client.keys():
-        datos = '0'
-    else
-        datos self.dicc_client[Client]
-    return datos
 
 
     def txt2registered(self):
@@ -222,60 +275,9 @@ class SIPProxyRegisterHandler(socketserver.DatagramRequestHandler):
         """
         fichero_txt = DATABASE_PATH 
         try:
-            self.dicc = txt.loads(open(DATABASE_PATH).read())
+            self.dicc_client = txt.loads(open(DATABASE_PATH).read())
         except:
-            self.dicc = {}
-
-
-    def Time_Caduced(self):
-    """
-    Función para actualizar el diccionario, elimina cientes que tengan el
-    Expires caducado
-    """
-    for Client in self.dicc_client:
-        # Imprimimos el diccionario de clientes
-        print(self.dicc_client)
-        Expiration = int(self.dicc_client[Client][3]) 
-        Time_now = int(time.time()) 
-        if Time_now >= Expiration:
-            print("Borramos el cliente: ", Client)
-            del self.dicc_client[Client]
-
-
-    def User_Not_Found(self, Puerto, Ip):
-        messg = "SIP/2.0 404 User Not Found\r\n\r\n"
-        self.wfile.write(messg)
-        print("Enviamos " + messg)
-        # Ecribimos los datos que se envian en el log
-        Event = ' Send to '
-        Datos_Log(PATH_LOG, Event, Ip, Puerto, messg)
-
-
-    def Open_Socket(self, Ip, Port, Line):
-        # Abrimos un socket para reeenviar el mensaje a la
-        # direccion que va dirigido
-        my_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        my_socket.setsockopt(socket.SOL_SOCKET,  socket.SO_REUSEADDR, 1)
-        my_socket.connect((Ip, Port))
-        my_socket.send(Line)
-
-
-    def Conexion_Segura(self, Port, Ip, Line):
-        Puerto = str(Port)
-        try:
-            data = my_socket.recv(1024)
-            data_decod = data.decode('utf-8')
-            # Escribimos mensages de recepción en el fichero de log
-            Evento = ' Received from '
-            Datos_Log(PATH_LOG, Evento, Ip, Puerto, data_decod)
-        except:
-            # Escribimos en el log el mensaje de error
-            Event = 'Error'
-            Datos_Log(PATH_LOG, Evento, Ip, Puerto, '')
-            Error = ip + "Port" + port + '\r\n'
-            sys.exit("Error: No server listening at " + Error)
-        # Si hay un server escuchando seguimos y enviamos
-        self.wfile.write(Line)
+            self.dicc_client = {}
 
 
 if __name__ == "__main__":
