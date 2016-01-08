@@ -58,7 +58,7 @@ def Datos_Log(fichero, evento, ip, port, line):
     time_now = time.strftime("%Y%m%d%H%M%S", time.gmtime(time.time()))
     if evento == 'Error':
         datos1 = time_now + ' ' + evento + ': No server listening at '
-        datos = datos1 + ip + port + '\r\n'
+        datos = datos1 + ip + "Port" + port + '\r\n'
     elif evento != 'Starting...' and evento != 'Finishing.':
         puerto = str(port)
         datos1 = time_now + ' ' + evento + ip + ':' + puerto + ': ' + line
