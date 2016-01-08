@@ -75,9 +75,9 @@ def Response_INVITE(username, ipserver, port, message_send):
     message_send += b'SIP/2.0 200 OK\r\n\r\n'
     message_send += b'Content-Type: application/sdp\r\n\r\n'
     message_send += b'v=0\r\n'
-    message_send += b'o=' + USER_NAME + ' ' + UASERVER_IP
+    message_send += b'o=' + username + ' ' + ipserver
     message_send += b' \r\n' + 's=misesion\r\n' + 't=0\r\n'
-    message_send += b'm=audio ' + PORT_AUDIO + ' RTP\r\n\r\n'
+    message_send += b'm=audio ' + port + ' RTP\r\n\r\n'
 
 
 class EchoHandler(socketserver.DatagramRequestHandler):
@@ -99,24 +99,20 @@ class EchoHandler(socketserver.DatagramRequestHandler):
                 Evento = ' Received from '
                 Datos_Log(PATH_LOG, Evento, IP_PROXY, PORT_PROXY, line_decod)
                 if METHOD == 'INVITE':
-                    print("Nos ha llegado un INVITE")
                     Response_INVITE(USER_NAME, UASERVER_IP, PORT_AUDIO, messg)
                     # Enviamos el mensaje de respuesta al INVITE
                     self.wfile.write(messg)
-                    print("Enviamos" + messg)
                     # Escribimos los mensages de envio en el log
                     Event = ' Send to '
                     Datos_Log(PATH_LOG, Event, IP_PROXY, PORT_PROXY, messg)
                 elif METHOD == 'ACK':
-                    print("Nos ha llegado un ACK")
                     os.system('chmod 777 mp32rtp')
                     # Contenido del archivo de audio a ejecutar
                     Primero_a_Ejecutar = './mp32rtp -i ' + IP_PROXY + ' -p '
                     Segundo_a_Ejecutar = str(PORT_AUDIO) + '<' + PATH_AUDIO
                     aEjecutar = Primero_a_Ejecutar + Segundo_a_Ejecutar
-                    print('Se está ejecutando el RTP')
                     # Escribimos el mensage de comienzo RTP en el log
-                    Event = ' Terminando el envío RTP '
+                    Event = ' Comenzando el envío RTP '
                     Datos_Log(PATH_LOG, Event, '', '', '')
                     # Se está ejecutando
                     os.system(aEjecutar)
@@ -124,14 +120,12 @@ class EchoHandler(socketserver.DatagramRequestHandler):
                     Event = ' Terminando el envío RTP '
                     Datos_Log(PATH_LOG, Event, '', '', '')
                 elif METHOD == 'BYE':
-                    print("Nos ha llegado un BYE")
                     mssg_send = b"SIP/2.0 200 OK\r\n\r\n"
                     self.wfile.write(mssg_send)
                     # Escribimos el mensage de envio en el log
                     Event = ' Send to '
                     Datos_Log(PATH_LOG, Event, IP_PROXY, PORT_PROXY, mssg_send)
                 elif METHOD not in METHODS:
-                    print("Nos ha llegado un método desconocido")
                     message_send = b'SIP/2.0 405 Method Not Allowed\r\n\r\n'
                     self.wfile.write(message_send)
                 else:
