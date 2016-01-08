@@ -72,7 +72,7 @@ class SIPProxyRegisterHandler(socketserver.DatagramRequestHandler):
             METHOD = line_decod.split(' ')[0].upper()
             # Métodos permitidos
             METHODS = ['REGISTER', 'INVITE', 'BYE', 'ACK']
-            # La IP y el Puerto de quien recivimos el mensaje
+            # La IP y el Puerto de quien recibimos el mensaje
             Ip = self.client_addres[0]
             Puerto = self.client_addres[1]
             # Escribimos mensages de recepción en el fichero de log
@@ -122,17 +122,14 @@ class SIPProxyRegisterHandler(socketserver.DatagramRequestHandler):
                     #MIRRRAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAR
                     self.register2json()
                 elif METHOD == 'INVITE':
+                    Sip_direccion = line_decod.split(' ')[1]
+                    direction_UA = Sip_direccion.split(':')[1]
                     # Comprobación de si el usuario está registrado o no
                     Usuario_Registro = register2registered(direction_UA)
                     # En función de si está registrado o no actuamos de
                     # diferente forma
                     if Usuario_Registro == 0:
-                        messg = "SIP/2.0 404 User Not Found\r\n\r\n"
-                        self.wfile.write(messg)
-                        print("Enviamos " + messg)
-                        # Ecribimos los datos que se envian en el log
-                        Event = ' Send to '
-                        Datos_Log(PATH_LOG, Event, Ip, Puerto, messg)
+                        User_Not_Found(Puerto, Ip)
                     else:
                         # Datos de la ip y puerto del usuario registrado
                         Ip_Regist = Usuario_Registro[0]
@@ -145,6 +142,13 @@ class SIPProxyRegisterHandler(socketserver.DatagramRequestHandler):
                         self.Conexion_Segura(Port_Regist, Ip_Regist, line)  
 
                 elif METHOD == 'ACK':
+                    Sip_direccion = line_decod.split(' ')[1]
+                    direction_UA = Sip_direccion.split(':')[1] 
+                    # Comprobación de si el usuario está registrado o no
+                    Usuario_Registro = register2registered(direction_UA)
+                    if Usuario_Registro == 0:
+                        User_Not_Found(Puerto, Ip)
+
                 elif METHOD == 'BYE':
                 elif METHOD not in METHODS:
                     mssg_send = b'SIP/2.0 405 Method Not Allowed\r\n\r\n'
@@ -236,6 +240,15 @@ class SIPProxyRegisterHandler(socketserver.DatagramRequestHandler):
         if Time_now >= Expiration:
             print("Borramos el cliente: ", Client)
             del self.dicc_client[Client]
+
+
+    def User_Not_Found(self, Puerto, Ip):
+        messg = "SIP/2.0 404 User Not Found\r\n\r\n"
+        self.wfile.write(messg)
+        print("Enviamos " + messg)
+        # Ecribimos los datos que se envian en el log
+        Event = ' Send to '
+        Datos_Log(PATH_LOG, Event, Ip, Puerto, messg)
 
 
     def Open_Socket(self, Ip, Port, Line):
