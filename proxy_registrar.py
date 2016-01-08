@@ -124,33 +124,29 @@ class SIPProxyRegisterHandler(socketserver.DatagramRequestHandler):
                 elif METHOD == 'INVITE':
                     # Comprobación de si el usuario está registrado o no
                     Usuario_Registro = register2registered(direction_UA)
+                    # En función de si está registrado o no actuamos de
+                    # diferente forma
                     if Usuario_Registro == 0:
                         messg = "SIP/2.0 404 User Not Found\r\n\r\n"
                         self.wfile.write(messg)
-                        print("Mensaje de usuario no registrado")
+                        print("Enviamos " + messg)
                         # Ecribimos los datos que se envian en el log
                         Event = ' Send to '
-                        Datos_Log(PATH_LOG, Event, Ip, puerto, messg)
+                        Datos_Log(PATH_LOG, Event, Ip, Puerto, messg)
                     else:
-                        print("Mensaje de usuario registrado")
-                        # Imprimimos los datos del usuario registrado
-                        print(Usuario_Registro)
                         # Datos de la ip y puerto del usuario registrado
-                        Ip_Registred = Usuario_Registro[0]
-                        Port_Registred = int(Usuario_Registro[1])
+                        Ip_Regist = Usuario_Registro[0]
+                        Port_Regist = int(Usuario_Registro[1])
 
-                        # Abrimos un socket para reeenviar el INVITE a la
-                        # direccion que va dirigido
-                        my_socket = socket.socket(socket.AF_INET,
-                                                socket.SOCK_DGRAM)
-                        my_socket.setsockopt(socket.SOL_SOCKET,
-                                                socket.SO_REUSEADDR, 1)
-                        my_socket.connect((Ip_Registred, iPort_Registred))
+                        # Abrimos un socket
+                        self.Open_Socket(Ip_Regist, Port_Regist, line)
+                        # Miramos que la conexión sea segura y se envían datos
+                        # o se hace sys.exit en función de la conexión
+                        self.Conexion_Segura(Port_Regist, Ip_Regist, line)  
 
                 elif METHOD == 'ACK':
                 elif METHOD == 'BYE':
                 elif METHOD not in METHODS:
-                    print("Nos ha llegado un método desconocido")
                     mssg_send = b'SIP/2.0 405 Method Not Allowed\r\n\r\n'
                     self.wfile.write(message_send)
                     # Escribimos en el log el mensaje de envío 405
@@ -159,7 +155,6 @@ class SIPProxyRegisterHandler(socketserver.DatagramRequestHandler):
                 else:
                     # Respuesta mal formada
                     self.wfile.write(b"SIP/2.0 400 Bad Request\r\n\r\n")
-            print("El cliente nos manda " + line_decod)
 
             # Si no hay más líneas salimos del bucle infinito
             if not line:
@@ -241,6 +236,33 @@ class SIPProxyRegisterHandler(socketserver.DatagramRequestHandler):
         if Time_now >= Expiration:
             print("Borramos el cliente: ", Client)
             del self.dicc_client[Client]
+
+
+    def Open_Socket(self, Ip, Port, Line):
+        # Abrimos un socket para reeenviar el mensaje a la
+        # direccion que va dirigido
+        my_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        my_socket.setsockopt(socket.SOL_SOCKET,  socket.SO_REUSEADDR, 1)
+        my_socket.connect((Ip, Port))
+        my_socket.send(Line)
+
+
+    def Conexion_Segura(self, Port, Ip, Line):
+        Puerto = str(Port)
+        try:
+            data = my_socket.recv(1024)
+            data_decod = data.decode('utf-8')
+            # Escribimos mensages de recepción en el fichero de log
+            Evento = ' Received from '
+            Datos_Log(PATH_LOG, Evento, Ip, Puerto, data_decod)
+        except:
+            # Escribimos en el log el mensaje de error
+            Event = 'Error'
+            Datos_Log(PATH_LOG, Evento, Ip, Puerto, '')
+            Error = ip + "Port" + port + '\r\n'
+            sys.exit("Error: No server listening at " + Error)
+        # Si hay un server escuchando seguimos y enviamos
+        self.wfile.write(Line)
 
 
 if __name__ == "__main__":
