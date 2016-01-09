@@ -82,16 +82,13 @@ if __name__ == "__main__":
         # Creamos el socket, lo configuramos y lo atamos a un servidor/puerto
         my_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         my_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        print(PORT_PROXY)
         my_socket.connect((IP_PROXY, int(PORT_PROXY)))
-        print(LINE)
 
         # Estamos enviando datos
         my_socket.send(bytes(LINE, 'utf-8') + b'\r\n')
         # Escribimos en el log los datos que enviamos
         Evento = ' Send to '
         Datos_Log(PATH_LOG, Evento, IP_PROXY, PORT_PROXY, LINE)
-        print(LINE)
 
         # Recibimos datos
         data = my_socket.recv(1024)
