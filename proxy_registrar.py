@@ -78,13 +78,6 @@ def Conexion_Segura(Path, Port, Ip, data_decod):
         sys.exit("Error: No server listening at " + Error)
 
 
-def User_Not_Found(Path, Puerto, Ip, messg):
-    messg = "SIP/2.0 404 User Not Found\r\n\r\n"
-    # Ecribimos los datos que se envian en el log
-    Event = ' Send to '
-    Datos_Log(Path, Event, Ip, Puerto, messg)
-
-
 def register2registered(dicc_client, Client):
     # Función para ver si un usuario está registrado, nos devuelve 0 si el
     # usuario no está registrado con ninguna de las claves, en caso cotrario se
@@ -138,23 +131,33 @@ class SIPProxyRegisterHandler(socketserver.DatagramRequestHandler):
             if len(line_decod) >= 2:
                 if METHOD == 'REGISTER':
                     lista = line_decod.split('\r\n\r\n')
+                    print(lista)
                     Client = lista[0].split(':')[1]
+                    print(Client)
                     lista0 = lista[0].split(':')[2]
                     Port_UA = lista0.split(' ')[0]
                     NONCE = random.getrandbits(898989898)
+                    print(len(lista))
                     if len(lista) == 2:
                         # Comprobación de si el usuario está registrado o no
+                        print("aqui")
                         User_R = register2registered(self.dicc_client, Client)
+                        print(User_R)
                         # En función de si está registrado o no actuamos de
                         # diferente forma
                         if User_R == 0:
-                            User_Not_Found(PATH_LOG, Puerto, Ip, mssg)
+                            mssg = "SIP/2.0 404 User Not Found\r\n\r\n"
+                            # Ecribimos los datos que se envian en el log
+                            Event = ' Send to '
+                            Datos_Log(Path, Event, Ip, Puerto, mssg)
                         else:
                             mssg = 'SIP/2.0 401 Unauthorized\r\n\r\n'
                             mssg += 'WWW Authenticate: nonce=' + str(NONCE)
                         # Enviamos el mensaje de respuesta al REGISTER sin
                         # Autenticación
+                        print(mssg)
                         self.wfile.write(bytes(mssg, 'utf-8'))
+                        print(mssg)
                         # Escribimos los mensages de envio en el log
                         Event = ' Send to '
                         Datos_Log(PATH_LOG, Event, Ip, Port_UA, mssg)
@@ -200,8 +203,11 @@ class SIPProxyRegisterHandler(socketserver.DatagramRequestHandler):
                     # En función de si está registrado o no actuamos de
                     # diferente forma
                     if Usuario_Regist == 0:
-                        User_Not_Found(PATH_LOG, Puerto, Ip, messg)
-                        self.wfile.write(bytes(messg, 'utf-8'))
+                        mssg = "SIP/2.0 404 User Not Found\r\n\r\n"
+                        # Ecribimos los datos que se envian en el log
+                        Event = ' Send to '
+                        Datos_Log(Path, Event, Ip, Puerto, mssg)
+                        self.wfile.write(bytes(mssg, 'utf-8'))
                     else:
                         # Datos de la ip y puerto del usuario registrado
                         Ip_Regist = Usuario_Regist[0]
@@ -224,8 +230,11 @@ class SIPProxyRegisterHandler(socketserver.DatagramRequestHandler):
                     # Comprobación de si el usuario está registrado o no
                     Usuario_Regist = register2registered(self.dicc_client, UA)
                     if Usuario_Regist == 0:
-                        User_Not_Found(PATH_LOG, Puerto, Ip, messg)
-                        self.wfile.write(bytes(messg, 'utf-8'))
+                        mssg = "SIP/2.0 404 User Not Found\r\n\r\n"
+                        # Ecribimos los datos que se envian en el log
+                        Event = ' Send to '
+                        Datos_Log(Path, Event, Ip, Puerto, mssg)
+                        self.wfile.write(bytes(mssg, 'utf-8'))
                     else:
                         # Datos de la ip y puerto del usuario registrado
                         Ip_Regist = Usuario_Regist[0]
@@ -240,8 +249,11 @@ class SIPProxyRegisterHandler(socketserver.DatagramRequestHandler):
                     # Comprobación de si el usuario está registrado o no
                     Usuario_Regist = register2registered(self.dicc_client, UA)
                     if Usuario_Regist == 0:
-                        User_Not_Found(PATH_LOG, Puerto, Ip, messg)
-                        self.wfile.write(bytes(messg, 'utf-8'))
+                        mssg = "SIP/2.0 404 User Not Found\r\n\r\n"
+                        # Ecribimos los datos que se envian en el log
+                        Event = ' Send to '
+                        Datos_Log(Path, Event, Ip, Puerto, mssg)
+                        self.wfile.write(bytes(mssg, 'utf-8'))
                     else:
                         # Datos de la ip y puerto del usuario registrado
                         Ip_Regist = Usuario_Regist[0]
