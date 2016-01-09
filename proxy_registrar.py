@@ -191,9 +191,9 @@ class SIPProxyRegisterHandler(socketserver.DatagramRequestHandler):
                                 register2txt(DATABASE_PATH, Ip, Client)
 
                             except:
-                                Error_Entero = "No es un entero"
-                                self.wfile.write(Error_Entero)
-                                print(Error_Entero)
+                                Error_Int = "Expires no es un entero\r\n\r\n"
+                                self.wfile.write(bytes(Error_Int, 'utf-8'))
+                                print(Error_Int)
                                 break
 
                 elif METHOD == 'INVITE':
@@ -291,8 +291,8 @@ class SIPProxyRegisterHandler(socketserver.DatagramRequestHandler):
                 if Password == Passwd:
                     Found = 'True'
                 else:
-                    message = b'Acceso denegado: password is incorrect\r\n\r\n'
-                    self.wfile.write(message)
+                    message = 'Acceso denegado: password is incorrect\r\n\r\n'
+                    self.wfile.write(bytes(message, 'utf-8'))
                     # Escribimos en el log el mensaje acceso denegado
                     Event = ' Send to '
                     Datos_Log(PATH_LOG, Event, Ip, Puerto, message)
