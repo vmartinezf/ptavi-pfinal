@@ -104,7 +104,8 @@ class EchoHandler(socketserver.DatagramRequestHandler):
                     self.wfile.write(messg)
                     # Escribimos los mensages de envio en el log
                     Event = ' Send to '
-                    Datos_Log(PATH_LOG, Event, IP_PROXY, PORT_PROXY, messg)
+                    mssg = messg.decode('utf-8')
+                    Datos_Log(PATH_LOG, Event, IP_PROXY, PORT_PROXY, mssg)
                 elif METHOD == 'ACK':
                     os.system('chmod 777 mp32rtp')
                     # Contenido del archivo de audio a ejecutar
@@ -120,17 +121,24 @@ class EchoHandler(socketserver.DatagramRequestHandler):
                     Event = ' Terminando el envío RTP '
                     Datos_Log(PATH_LOG, Event, '', '', '')
                 elif METHOD == 'BYE':
-                    mssg_send = b"SIP/2.0 200 OK\r\n\r\n"
-                    self.wfile.write(mssg_send)
+                    mssg_send = "SIP/2.0 200 OK\r\n\r\n"
+                    self.wfile.write(bytes(mssg_send, 'utf-8'))
                     # Escribimos el mensage de envio en el log
                     Event = ' Send to '
                     Datos_Log(PATH_LOG, Event, IP_PROXY, PORT_PROXY, mssg_send)
                 elif METHOD not in METHODS:
-                    message_send = b'SIP/2.0 405 Method Not Allowed\r\n\r\n'
-                    self.wfile.write(message_send)
+                    messg = 'SIP/2.0 405 Method Not Allowed\r\n\r\n'
+                    self.wfile.write(bytes(messg, 'utf-8'))
+                    # Escribimos los mensages de envio en el log
+                    Event = ' Send to '
+                    Datos_Log(PATH_LOG, Event, IP_PROXY, PORT_PROXY, messg)
                 else:
                     # Respuesta mal formada
-                    self.wfile.write(b"SIP/2.0 400 Bad Request\r\n\r\n")
+                    messg = "SIP/2.0 400 Bad Request\r\n\r\n"
+                    self.wfile.write(bytes(messg, 'utf-8'))
+                    # Escribimos los mensages de envio en el log
+                    Event = ' Send to '
+                    Datos_Log(PATH_LOG, Event, IP_PROXY, PORT_PROXY, messg)
             else:
                 print("El cliente nos manda " + line_decod)
 
