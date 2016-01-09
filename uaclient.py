@@ -83,7 +83,7 @@ if __name__ == "__main__":
         my_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         my_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         print(PORT_PROXY)
-        my_socket.connect((IP_PROXY, PORT_PROXY))
+        my_socket.connect((IP_PROXY, int(PORT_PROXY)))
         print(LINE)
 
         # Estamos enviando datos
