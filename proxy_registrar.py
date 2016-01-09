@@ -49,20 +49,12 @@ class XMLHandler_Proxy(ContentHandler):
         return self.lista_etiquetas
 
 
-def Data_Regist(line_decod, NONCE, Port_UA, Client):
-    lista = line_decod.split('\r\n')
-    Client = lista[0].split(':')[1]
-    lista0 = lista[0].split(':')[2]
-    Port_UA = lista0.split(' ')[0]
-    NONCE = random.getrandbits(898989898798989898989)
-
-
 def Open_Socket(Path, Ip, Port, Line):
     # Abrimos un socket para reeenviar el mensaje a la
     # direccion que va dirigido
     my_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     my_socket.setsockopt(socket.SOL_SOCKET,  socket.SO_REUSEADDR, 1)
-    my_socket.connect((Ip, Port))
+    my_socket.connect((Ip, int(Port)))
     my_socket.send(Line)
     # Escribimos el mensaje de envio en el archivo de log
     Puerto = str(Port)
@@ -127,24 +119,29 @@ class SIPProxyRegisterHandler(socketserver.DatagramRequestHandler):
 
         # Actualizamos el diccionario de clientes por si ha caducado el Espires
         # de algún cliente
-        Time_Caduced(dicc_client)
+        Time_Caduced(self.dicc_client)
 
         while 1:
             # Leyendo línea a línea lo que nos envía el cliente
             line = self.rfile.read()
             line_decod = line.decode('utf-8')
+            print(line_decod)
             METHOD = line_decod.split(' ')[0].upper()
             # Métodos permitidos
             METHODS = ['REGISTER', 'INVITE', 'BYE', 'ACK']
             # La IP y el Puerto de quien recibimos el mensaje
-            Ip = self.client_addres[0]
-            Puerto = self.client_addres[1]
+            Ip = self.client_address[0]
+            Puerto = self.client_address[1]
             # Escribimos mensages de recepción en el fichero de log
             Evento = ' Received from '
             Datos_Log(PATH_LOG, Evento, Ip, Puerto, line_decod)
             if len(line_decod) >= 2:
                 if METHOD == 'REGISTER':
-                    Data_Regist(line_decod, NONCE, Port_UA, Client)
+                    lista = line_decod.split('\r\n')
+                    Client = lista[0].split(':')[1]
+                    lista0 = lista[0].split(':')[2]
+                    Port_UA = lista0.split(' ')[0]
+                    NONCE = random.getrandbits(898989898)
                     if len(lista) == 2:
                         # Comprobación de si el usuario está registrado o no
                         User_R = register2registered(self.dicc_client, Client)
@@ -191,7 +188,7 @@ class SIPProxyRegisterHandler(socketserver.DatagramRequestHandler):
                                 self.wfile.write(bytes(messg, 'utf-8'))
                                 # Escribimos el mensage de envio en el log
                                 Event = ' Send to '
-                                Datos_Log(PATH_LOG, Event, Ip, Puerto, messg)
+                                #Datos_Log(PATH_LOG, Event, Ip, Puerto, messg)
                                 break
 
                 elif METHOD == 'INVITE':
