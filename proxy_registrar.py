@@ -88,7 +88,6 @@ def Conexion_Segura(Path, Port, Ip, data_decod):
 
 def User_Not_Found(Path, Puerto, Ip, messg):
     messg = "SIP/2.0 404 User Not Found\r\n\r\n"
-    print("Enviamos " + messg)
     # Ecribimos los datos que se envian en el log
     Event = ' Send to '
     Datos_Log(Path, Event, Ip, Puerto, messg)
@@ -112,7 +111,6 @@ def Time_Caduced(dicc_client):
         Expiration = int(dicc_client[Client][3])
         Time_now = int(time.time())
         if Time_now >= Expiration:
-            print("Borramos el cliente: ", Client)
             del dicc_client[Client]
 
 
@@ -135,7 +133,6 @@ class SIPProxyRegisterHandler(socketserver.DatagramRequestHandler):
             # Leyendo línea a línea lo que nos envía el cliente
             line = self.rfile.read()
             line_decod = line.decode('utf-8')
-            print("El cliente nos manda " + line_decod)
             METHOD = line_decod.split(' ')[0].upper()
             # Métodos permitidos
             METHODS = ['REGISTER', 'INVITE', 'BYE', 'ACK']
@@ -161,7 +158,6 @@ class SIPProxyRegisterHandler(socketserver.DatagramRequestHandler):
                         # Enviamos el mensaje de respuesta al REGISTER sin
                         # Autenticación
                         self.wfile.write(bytes(mssg, 'utf-8'))
-                        print("Enviamos" + messg)
                         # Escribimos los mensages de envio en el log
                         Event = ' Send to '
                         Datos_Log(PATH_LOG, Event, Ip, Port_UA, mssg)
@@ -191,9 +187,11 @@ class SIPProxyRegisterHandler(socketserver.DatagramRequestHandler):
                                 register2txt(DATABASE_PATH, Ip, Client)
 
                             except:
-                                Error_Int = "Expires no es un entero\r\n\r\n"
-                                self.wfile.write(bytes(Error_Int, 'utf-8'))
-                                print(Error_Int)
+                                messg = "Expires no es un entero\r\n\r\n"
+                                self.wfile.write(bytes(messg, 'utf-8'))
+                                # Escribimos el mensage de envio en el log
+                                Event = ' Send to '
+                                Datos_Log(PATH_LOG, Event, Ip, Puerto, messg)
                                 break
 
                 elif METHOD == 'INVITE':
@@ -365,7 +363,6 @@ if __name__ == "__main__":
         Datos_Log(PATH_LOG, Event, '', '', '')
         IP = '127.0.0.1'
         serv = socketserver.UDPServer((IP, PORT), SIPProxyRegisterHandler)
-        print("Listening...")
         serv.serve_forever()
     except:
         sys.exit("Usage: Error")
