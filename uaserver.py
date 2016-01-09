@@ -94,7 +94,6 @@ class EchoHandler(socketserver.DatagramRequestHandler):
             METHOD = line_decod.split(' ')[0].upper()
             METHODS = ['INVITE', 'BYE', 'ACK']
             if len(line_decod) >= 2:
-                print("El cliente nos manda " + line_decod)
                 # Escribimos mensages de recepción en el fichero de log
                 Evento = ' Received from '
                 Datos_Log(PATH_LOG, Evento, IP_PROXY, PORT_PROXY, line_decod)
@@ -140,7 +139,9 @@ class EchoHandler(socketserver.DatagramRequestHandler):
                     Event = ' Send to '
                     Datos_Log(PATH_LOG, Event, IP_PROXY, PORT_PROXY, messg)
             else:
-                print("El cliente nos manda " + line_decod)
+                # Escribimos mensages de recepción en el fichero de log
+                Evento = ' Received from '
+                Datos_Log(PATH_LOG, Evento, IP_PROXY, PORT_PROXY, line_decod)
 
             # Si no hay más líneas salimos del bucle infinito
             if not line:
