@@ -89,7 +89,7 @@ if __name__ == "__main__":
         elif METHOD == 'BYE':
             LINE = Line_Sip + OPTION + " SIP/2.0\r\n"
         else:
-            sys.exit("This method is incorrect")
+            LINE = Line_Sip + OPTION + " SIP/2.0\r\n"
 
         # Creamos el socket, lo configuramos y lo atamos a un servidor/puerto
         my_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -124,7 +124,7 @@ if __name__ == "__main__":
 
             # RTP
             IP_RECEPT = lista[4].split(' ')[2]
-            PORT_RECEPT = lista[5].split(' ')[1]
+            PORT_RECEPT = lista[4].split(' ')[6]
             os.system('chmod 777 mp32rtp')
             # Contenido del archivo de audio a ejecutar
             Primero_a_Ejecutar = './mp32rtp -i ' + IP_RECEPT + ' -p '
@@ -155,6 +155,7 @@ if __name__ == "__main__":
             # Escribimos en el log los datos que enviamos
             Evento = ' Send to '
             Datos_Log(PATH_LOG, Evento, IP_PROXY, PORT_PROXY, LINEREGIST)
+            data = my_socket.recv(1024)
         elif lista == ['Acceso denegado: password is incorrect']:
             sys.exit("Usage: The Password is incorrect")
         elif lista == ['Expires no es un entero']:
