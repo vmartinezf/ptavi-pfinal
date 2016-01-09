@@ -94,23 +94,6 @@ def User_Not_Found(Path, Puerto, Ip, messg):
     Datos_Log(Path, Event, Ip, Puerto, messg)
 
 
-def register2txt(Path, dicc_client, Ip, Puerto):
-    # Función de registro de usuarios en el archivo database.txt
-    fich = open(Path, "w")
-    Linea = "Usuario\tIP\tPuerto\t" + "Fecha de Registro\t"
-    Linea += "Tiempo de expiracion\r\n"
-    fich.write(Linea)
-    for Client in dicc_client:
-        Ip = dicc_client[Client][0]
-        Port = dicc_client[Client][1]
-        Fecha_Registro = dic_clientes[Client][2]
-        Expiration = dic_clientes[Client][3]
-        Line = Client + "\t" + Ip + "\t" + str(Port) + "\t"
-        Line += str(Fecha_Registro) + "\t\t" + str(Expiration) + "\r\n"
-        fich.write(Line)
-    fich.close()
-
-
 def register2registered(dicc_client, Client):
     # Función para ver si un usuario está registrado, nos devuelve 0 si el
     # usuario no está registrado con ninguna de las claves, en caso cotrario se
