@@ -137,7 +137,7 @@ class SIPProxyRegisterHandler(socketserver.DatagramRequestHandler):
             Datos_Log(PATH_LOG, Evento, Ip, Puerto, line_decod)
             if len(line_decod) >= 2:
                 if METHOD == 'REGISTER':
-                    lista = line_decod.split('\r\n')
+                    lista = line_decod.split('\r\n\r\n')
                     Client = lista[0].split(':')[1]
                     lista0 = lista[0].split(':')[2]
                     Port_UA = lista0.split(' ')[0]
@@ -151,7 +151,7 @@ class SIPProxyRegisterHandler(socketserver.DatagramRequestHandler):
                             User_Not_Found(PATH_LOG, Puerto, Ip, mssg)
                         else:
                             mssg = 'SIP/2.0 401 Unauthorized\r\n\r\n'
-                            mssg += 'WWW Authenticate: nonce=' + NONCE
+                            mssg += 'WWW Authenticate: nonce=' + str(NONCE)
                         # Enviamos el mensaje de respuesta al REGISTER sin
                         # Autenticación
                         self.wfile.write(bytes(mssg, 'utf-8'))
@@ -159,7 +159,8 @@ class SIPProxyRegisterHandler(socketserver.DatagramRequestHandler):
                         Event = ' Send to '
                         Datos_Log(PATH_LOG, Event, Ip, Port_UA, mssg)
                     elif len(lista) == 3:
-                        Passwd_Nonce = lista[2].split('response=')[1]
+                        print("por aqui")
+                        Passwd_Nonce = int(lista[2].split('response=')[1])
                         Passwd = Passwd_Nonce - NONCE
                         self.CheckPsswd(DATA_PASSWDPATH, Passwd, Client, Found,
                                         Ip, Puerto)
