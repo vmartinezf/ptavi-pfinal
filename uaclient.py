@@ -137,9 +137,9 @@ if __name__ == "__main__":
             Nonce = lista[1].split('=')[1]
             m.update(bytes(PASSWD + Nonce, 'utf-8'))
             RESPONSE = m.hexdigest()
-            Data_REG_NO_AUT(Line_Sip, UASERVER_PORT, USER_NAME, OPTION, Line)
-            Line_Authorization = "Authorization: response=" + RESPONSE + "\r\n"
-            LINE_REGIST = Line + Line_Authorization
+            LINE_REGIST = Line_Sip + USER_NAME + ":" + UASERVER_PORT
+            LINE_REGIST += " SIP/2.0\r\n" + "Expires: " + OPTION + "\r\n"
+            LINE_REGIST  = "Authorization: response=" + RESPONSE + "\r\n"
             my_socket.send(bytes(LINE_REGIST, 'utf-8') + b'\r\n')
             # Escribimos en el log los datos que enviamos
             Evento = ' Send to '
