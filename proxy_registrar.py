@@ -49,41 +49,49 @@ class XMLHandler_Proxy(ContentHandler):
         return self.lista_etiquetas
 
 
-    def Open_Socket(Path, Ip, Port, Line):
-        # Abrimos un socket para reeenviar el mensaje a la
-        # direccion que va dirigido
-        my_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        my_socket.setsockopt(socket.SOL_SOCKET,  socket.SO_REUSEADDR, 1)
-        my_socket.connect((Ip, Port))
-        my_socket.send(Line)
-        # Escribimos el mensaje de envio en el archivo de log
-        Puerto = str(Port)
-        Event = ' Send to '
-        Datos_Log(PATH_LOG, Event, Ip, Puerto, Line)
+def Data_Regist(line_decod, NONCE, Port_UA, Client):
+    lista = line_decod.split('\r\n')
+    Client = lista[0].split(':')[1]
+    lista0 = lista[0].split(':')[2]
+    Port_UA = lista0.split(' ')[0]
+    NONCE = random.getrandbits(898989898798989898989)
 
 
-    def Conexion_Segura(Path, Port, Ip, data_decod):
-        Puerto = str(Port)
-        try:
-            data = my_socket.recv(1024)
-            data_decod = data.decode('utf-8')
-            # Escribimos mensages de recepción en el fichero de log
-            Evento = ' Received from '
-            Datos_Log(PATH_LOG, Evento, Ip, Puerto, data_decod)
-        except:
-            # Escribimos en el log el mensaje de error
-            Event = 'Error'
-            Datos_Log(Path, Event, Ip, Puerto, '')
-            Error = ip + "Port" + port + '\r\n'
-            sys.exit("Error: No server listening at " + Error)
+def Open_Socket(Path, Ip, Port, Line):
+    # Abrimos un socket para reeenviar el mensaje a la
+    # direccion que va dirigido
+    my_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    my_socket.setsockopt(socket.SOL_SOCKET,  socket.SO_REUSEADDR, 1)
+    my_socket.connect((Ip, Port))
+    my_socket.send(Line)
+    # Escribimos el mensaje de envio en el archivo de log
+    Puerto = str(Port)
+    Event = ' Send to '
+    Datos_Log(PATH_LOG, Event, Ip, Puerto, Line)
 
 
-    def User_Not_Found(Path, Puerto, Ip, messg):
-        messg = "SIP/2.0 404 User Not Found\r\n\r\n"
-        print("Enviamos " + messg)
-        # Ecribimos los datos que se envian en el log
-        Event = ' Send to '
-        Datos_Log(Path, Event, Ip, Puerto, messg)
+def Conexion_Segura(Path, Port, Ip, data_decod):
+    Puerto = str(Port)
+    try:
+        data = my_socket.recv(1024)
+        data_decod = data.decode('utf-8')
+        # Escribimos mensages de recepción en el fichero de log
+        Evento = ' Received from '
+        Datos_Log(PATH_LOG, Evento, Ip, Puerto, data_decod)
+    except:
+        # Escribimos en el log el mensaje de error
+        Event = 'Error'
+        Datos_Log(Path, Event, Ip, Puerto, '')
+        Error = ip + "Port" + Puerto + '\r\n'
+        sys.exit("Error: No server listening at " + Error)
+
+
+def User_Not_Found(Path, Puerto, Ip, messg):
+    messg = "SIP/2.0 404 User Not Found\r\n\r\n"
+    print("Enviamos " + messg)
+    # Ecribimos los datos que se envian en el log
+    Event = ' Send to '
+    Datos_Log(Path, Event, Ip, Puerto, messg)
 
 
     def register2txt(Path, dicc_client):
@@ -162,32 +170,37 @@ class SIPProxyRegisterHandler(socketserver.DatagramRequestHandler):
             Datos_Log(PATH_LOG, Evento, Ip, Puerto, line_decod)
             if len(line_decod) >= 2:
                 if METHOD  == 'REGISTER':
-                    lista = line_decod.split('\r\n')
-                    Client = lista[0].split(':')[1]
-                    lista0 = lista[0].split(':')[2]
-                    Port_UA = lista0.split(' ')[0]
-                    NONCE = random.getrandbits(898989898798989898989)
-                    # MIRAR EL LOG
+                    Data_Regist(line_decod, NONCE, Port_UA, Client)
                     if len(lista) == 2:
-                        mssg = b'SIP/2.0 401 Unauthorized\r\n\r\n'
-                        mssg += b'WWW Authenticate: nonce=' + NONCE
+                        # Comprobación de si el usuario está registrado o no
+                        User_Regist = register2registered(dicc_client, Client)
+                        # En función de si está registrado o no actuamos de
+                        # diferente forma
+                        if User_Regist == 0:
+                            User_Not_Found(PATH_LOG, Puerto, Ip, mssg)
+                        else:
+                            mssg = 'SIP/2.0 401 Unauthorized\r\n\r\n'
+                            mssg += 'WWW Authenticate: nonce=' + NONCE
                         # Enviamos el mensaje de respuesta al REGISTER sin
                         # Autenticación
-                        self.wfile.write(messg)
+                        self.wfile.write(bytes(mssg, 'utf-8'))
                         print("Enviamos" + messg)
                         # Escribimos los mensages de envio en el log
                         Event = ' Send to '
                         Datos_Log(PATH_LOG, Event, Ip, Port_UA, mssg)
-                    else len(lista) == 3: #MIRAR
+                    elif len(lista) == 3: #MIRAR
                         Passwd_Nonce = lista[2].split('response=')[1]
                         Passwd = Passwd_Nonce - NONCE
-                        self.CheckPsswd(DATA_PASSWDPATH, Passwd, Client, Found)
+                        self.CheckPsswd(DATA_PASSWDPATH, Passwd, Client, Found,
+                                        Ip, Puerto)
                         if Found:
                             try:
                                 Expires = lista[2].split(' ')[1]
                                 if Expires == '0':
                                     Event = ' Borrando ' + Client
                                     Datos_Log(PATH_LOG, Event, '', '', '')
+                                else:
+                                    
                             except:
                                 Error_Entero = "No es un entero"
                                 self.wfile.write(Error_Entero)
@@ -197,10 +210,7 @@ class SIPProxyRegisterHandler(socketserver.DatagramRequestHandler):
                             # Escribimos los mensages de envio en el log
                             Event = ' Send to '#mirar ip y port y cambiar
                             Datos_Log(PATH_LOG, Event, IP_UA, Port_UA, messg)
-                    # Escribimos en el log el mensage enviado
-                    Event = ' Send to '
-                    # CAMBIAR LOS DATOS DEL LOG IP Y PORT
-                    Datos_Log(PATH_LOG, Event, IP_PROXY, PORT_PROXY, mssg_send)
+
                 elif METHOD == 'INVITE':
                     Sip_direccion = line_decod.split(' ')[1]
                     dir_UA = Sip_direccion.split(':')[1]
@@ -268,15 +278,15 @@ class SIPProxyRegisterHandler(socketserver.DatagramRequestHandler):
                         Datos_Log(PATH_LOG, Event, Ip, Puerto, data)
                     
                 elif METHOD not in METHODS:
-                    mssg_send = b'SIP/2.0 405 Method Not Allowed\r\n\r\n'
-                    self.wfile.write(mssg_send)
+                    mssg_send = 'SIP/2.0 405 Method Not Allowed\r\n\r\n'
+                    self.wfile.write(bytes(mssg_send, 'utf-8'))
                     # Escribimos en el log el mensaje de envío 405
                     Event = ' Send to '
                     Datos_Log(PATH_LOG, Event, Ip, Puerto, mssg_send)
                 else:
                     # Respuesta mal formada
-                    mssg_send = b"SIP/2.0 400 Bad Request\r\n\r\n"
-                    self.wfile.write(mssg_send)
+                    mssg_send = 'SIP/2.0 400 Bad Request\r\n\r\n'
+                    self.wfile.write(bytes(mssg_send, 'utf-8'))
                     # Escribimos en el log el mensaje de envío 405
                     Event = ' Send to '
                     Datos_Log(PATH_LOG, Event, Ip, Puerto, mssg_send)
@@ -286,7 +296,7 @@ class SIPProxyRegisterHandler(socketserver.DatagramRequestHandler):
                 break
 
             
-    def CheckPsswd(self, Path, Passwd, User_agent, Found):
+    def CheckPsswd(self, Path, Passwd, User_agent, Found, Ip, Puerto):
         Found = 'False'
         fich = open(Path, 'r')
         lines = fich.readlines()
@@ -299,6 +309,9 @@ class SIPProxyRegisterHandler(socketserver.DatagramRequestHandler):
                 else:
                     message = b'Acceso denegado: password is incorrect\r\n\r\n'
                     self.wfile.write(message)
+                    # Escribimos en el log el mensaje acceso denegado
+                    Event = ' Send to 
+                    Datos_Log(PATH_LOG, Event, Ip, Puerto, message)
         fich.close()
 
 
