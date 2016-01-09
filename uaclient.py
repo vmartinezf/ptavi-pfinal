@@ -15,22 +15,6 @@ from uaserver import XMLHandler
 from uaserver import Datos_Log
 
 
-def Data_REG_NO_AUT(Linea, Port, username, option, LINE):
-    Line_Register = username + ":" + Port + " SIP/2.0\r\n"
-    Line_Expires = "Expires: " + option + "\r\n"
-    LINE = Linea + Line_Register + Line_Expires
-
-
-def Data_INVITE(Linea, option, username, Port, ip, LINE):
-    Line_Invite_sip = Linea + option + " SIP/2.0\r\n"
-    Line_Content_Type = "Content-Type: application/sdp\r\n\r\n"
-    Line_Version_Option = "v=0\r\n" + "o=" + username + " " + ip + " \r\n"
-    Line_Session_T = "s=misesion\r\n" + "t=0\r\n"
-    Line_Audio = "m=audio " + Port + " RTP\r\n"
-    LINE = Line_Invite_sip + Line_Content_Type + Line_Version_Option
-    LINE += Line_Session_T + Line_Audio
-
-
 # Cliente UDP simple Sip.
 if __name__ == "__main__":
 
@@ -79,32 +63,40 @@ if __name__ == "__main__":
         if METHOD == 'REGISTER':
             # Añadimos al  archivo log cuando comenzamos
             Event = ' Starting...'
-            print(Event)
             Datos_Log(PATH_LOG, Event, '', '', '')
             # Datos de envio del REGISTER sin Autentincación
-            Data_REG_NO_AUT(Line_Sip, UASERVER_PORT, USER_NAME, OPTION, LINE)
+            LINE = Line_Sip + USER_NAME + ":" + UASERVER_PORT
+            LINE += " SIP/2.0\r\n" + "Expires: " + OPTION + "\r\n"
         elif METHOD == 'INVITE':
             IP = UASERVER_IP
-            Data_INVITE(Line_Sip, OPTION, USER_NAME, PORT_AUDIO, IP, LINE)
+            LINE = Line_Sip + option + " SIP/2.0\r\n"
+            LINE += "Content-Type: application/sdp\r\n\r\n"
+            LINE += "v=0\r\n" + "o=" + USER_NAME + " " + UASERVER_IP + " \r\n"
+            LINE += "s=misesion\r\n" + "t=0\r\n"
+            LINE += "m=audio " + PORT_AUDIO + " RTP\r\n"
         elif METHOD == 'BYE':
             LINE = Line_Sip + OPTION + " SIP/2.0\r\n"
         else:
             LINE = Line_Sip + OPTION + " SIP/2.0\r\n"
-
+        
         # Creamos el socket, lo configuramos y lo atamos a un servidor/puerto
         my_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         my_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        print(PORT_PROXY)
         my_socket.connect((IP_PROXY, PORT_PROXY))
+        print(LINE)
 
         # Estamos enviando datos
         my_socket.send(bytes(LINE, 'utf-8') + b'\r\n')
         # Escribimos en el log los datos que enviamos
         Evento = ' Send to '
         Datos_Log(PATH_LOG, Evento, IP_PROXY, PORT_PROXY, LINE)
+        print(LINE)
 
         # Recibimos datos
         data = my_socket.recv(1024)
         data_decod = data.decode('utf-8')
+        print(data_decod)
 
         # Escribimos el mensaje en el archivo de log el mensaje recibido
         Evento = ' Received from '
