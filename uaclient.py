@@ -79,6 +79,7 @@ if __name__ == "__main__":
         if METHOD == 'REGISTER':
             # Añadimos al  archivo log cuando comenzamos
             Event = ' Starting...'
+            print(Event)
             Datos_Log(PATH_LOG, Event, '', '', '')
             # Datos de envio del REGISTER sin Autentincación
             Data_REG_NO_AUT(Line_Sip, UASERVER_PORT, USER_NAME, OPTION, LINE)
@@ -96,7 +97,6 @@ if __name__ == "__main__":
         my_socket.connect((IP_PROXY, PORT_PROXY))
 
         # Estamos enviando datos
-        print("Enviando: " + LINE)
         my_socket.send(bytes(LINE, 'utf-8') + b'\r\n')
         # Escribimos en el log los datos que enviamos
         Evento = ' Send to '
@@ -106,7 +106,6 @@ if __name__ == "__main__":
         data = my_socket.recv(1024)
         data_decod = data.decode('utf-8')
 
-        print('Recibido -- ', data_decod)
         # Escribimos el mensaje en el archivo de log el mensaje recibido
         Evento = ' Received from '
         Datos_Log(PATH_LOG, Evento, IP_PROXY, PORT_PROXY, data_decod)
@@ -118,9 +117,7 @@ if __name__ == "__main__":
         OK = 'SIP/2.0 200 OK'
         if lista[0:3] == [Trying, Ring, OK]:
             LINEACK = "ACK" + " sip:" + OPTION + " SIP/2.0\r\n"
-            print("Enviando: " + LINEACK)
             my_socket.send(bytes(LINEACK, 'utf-8') + b'\r\n')
-            data = my_socket.recv(1024)
             # Escribimos en el log los datos que enviamos
             Evento = ' Send to '
             Datos_Log(PATH_LOG, Evento, IP_PROXY, PORT_PROXY, LINEACK)
@@ -141,6 +138,7 @@ if __name__ == "__main__":
             # Escribimos el mensage de fin RTP en el log
             Event = ' Terminando el envío RTP '
             Datos_Log(PATH_LOG, Event, '', '', '')
+            data = my_socket.recv(1024)
         elif lista == ['SIP/2.0 400 Bad Request']:
             sys.exit("Usage: python uaclient.py config method option")
         elif lista == ['SIP/2.0 404 User Not Found Request']:
@@ -154,10 +152,13 @@ if __name__ == "__main__":
             Line_Authorization = "Authorization: response=" + RESPONSE + "\r\n"
             LINE_REGIST = Line + Line_Authorization
             my_socket.send(bytes(LINE_REGIST, 'utf-8') + b'\r\n')
-            print("Enviando: " + LINE_REGIST)
             # Escribimos en el log los datos que enviamos
             Evento = ' Send to '
             Datos_Log(PATH_LOG, Evento, IP_PROXY, PORT_PROXY, LINEREGIST)
+        elif lista == ['Acceso denegado: password is incorrect']:
+            sys.exit("Usage: The Password is incorrect")
+        elif lista == ['Expires no es un entero']:
+            sys.exit("Usage: Expires no es un entero")
         elif lista != OK:
             # Escribimos en el log el mensaje de error
             Evento = 'Error: Method incorrect'
