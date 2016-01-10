@@ -109,6 +109,8 @@ if __name__ == "__main__":
         print("Terminando socket...")
 
         lista = data_decod.split('\r\n\r\n')[0:-1]
+        Not_Aut = data_decod.split('\r\n')[0]
+        print(Not_Aut)
         print(lista)
         Trying = 'SIP/2.0 100 Trying'
         Ring = 'SIP/2.0 180 Ring'
@@ -144,10 +146,10 @@ if __name__ == "__main__":
             Event = ' Terminando el envío RTP '
             Datos_Log(PATH_LOG, Event, '', '', '')
             data = my_socket.recv(1024)
-        elif lista == ['SIP/2.0 401 Unauthorized']:
+        elif Not_Aut == 'SIP/2.0 401 Unauthorized':
             m = hashlib.md5()
             Nonce_Salto_Linea = data_decod.split('nonce=')[1]
-            Nonce = Nonce_Salto_Linea.split('\r\n')[0]
+            Nonce = Nonce_Salto_Linea.split('\r\n\r\n')[0]
             print(Nonce)
             m.update(bytes(PASSWD + Nonce, 'utf-8'))
             RESPONSE = m.hexdigest()
