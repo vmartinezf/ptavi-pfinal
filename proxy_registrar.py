@@ -150,7 +150,7 @@ class SIPProxyRegisterHandler(socketserver.DatagramRequestHandler):
                         Psswd = Psswd_Salto_Linea.split('\r\n')[0]
                         print(Psswd)
                         Found = self.CheckPsswd(DATA_PASSWDPATH, Psswd, Client,
-                                        Ip, Puerto, NONCE)
+                                                Ip, Puerto, NONCE)
                         print(Found)
                         if Found == 'True':
                             try:
