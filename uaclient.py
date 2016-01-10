@@ -89,6 +89,11 @@ if __name__ == "__main__":
 
         # Estamos enviando datos
         my_socket.send(bytes(LINE, 'utf-8') + b'\r\n')
+    except:
+        Evento = 'Error'
+        Datos_Log(PATH_LOG, Evento, IP_PROXY, PORT_PROXY, '')
+        sys.exit("Error: No server listening")
+    try:
         # Escribimos en el log los datos que enviamos
         Evento = ' Send to '
         Datos_Log(PATH_LOG, Evento, IP_PROXY, PORT_PROXY, LINE)
@@ -104,12 +109,18 @@ if __name__ == "__main__":
         print("Terminando socket...")
 
         lista = data_decod.split('\r\n\r\n')[0:-1]
+        print(lista)
         Trying = 'SIP/2.0 100 Trying'
         Ring = 'SIP/2.0 180 Ring'
         OK = 'SIP/2.0 200 OK'
         if lista[0:3] == [Trying, Ring, OK]:
             LINEACK = "ACK" + " sip:" + OPTION + " SIP/2.0\r\n"
-            my_socket.send(bytes(LINEACK, 'utf-8') + b'\r\n')
+            try:
+                my_socket.send(bytes(LINEACK, 'utf-8') + b'\r\n')
+            except:
+                Evento = 'Error'
+                Datos_Log(PATH_LOG, Evento, IP_PROXY, PORT_PROXY, '')
+                sys.exit("Error: No server listening")
             # Escribimos en el log los datos que enviamos
             Evento = ' Send to '
             Datos_Log(PATH_LOG, Evento, IP_PROXY, PORT_PROXY, LINEACK)
@@ -134,7 +145,8 @@ if __name__ == "__main__":
         elif lista == ['SIP/2.0 400 Bad Request']:
             sys.exit("Usage: python uaclient.py config method option")
         elif lista == ['SIP/2.0 404 User Not Found']:
-            sys.exit("Usage: User not Found")
+            print("hola")
+            #sys.exit("Usage: User not Found")
         elif lista[0] == 'SIP/2.0 401 Unauthorized':
             m = hashlib.md5()
             Nonce = lista[1].split('=')[1]
@@ -143,7 +155,12 @@ if __name__ == "__main__":
             LINE_REGIST = Line_Sip + USER_NAME + ":" + UASERVER_PORT
             LINE_REGIST += " SIP/2.0\r\n" + "Expires: " + OPTION + "\r\n"
             LINE_REGIST  = "Authorization: response=" + RESPONSE + "\r\n"
-            my_socket.send(bytes(LINE_REGIST, 'utf-8') + b'\r\n')
+            try:
+                my_socket.send(bytes(LINE_REGIST, 'utf-8') + b'\r\n')
+            except:
+                Evento = 'Error'
+                Datos_Log(PATH_LOG, Evento, IP_PROXY, PORT_PROXY, '')
+                sys.exit("Error: No server listening")
             # Escribimos en el log los datos que enviamos
             Evento = ' Send to '
             Datos_Log(PATH_LOG, Evento, IP_PROXY, PORT_PROXY, LINEREGIST)
@@ -165,6 +182,4 @@ if __name__ == "__main__":
         print("Fin.")
 
     except:
-        Evento = 'Error'
-        Datos_Log(PATH_LOG, Evento, IP_PROXY, PORT_PROXY, '')
-        sys.exit("Error: No server listening")
+        sys.exit("Usage: python uaclient.py config method option")
