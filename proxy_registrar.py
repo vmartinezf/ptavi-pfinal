@@ -105,6 +105,9 @@ class SIPProxyRegisterHandler(socketserver.DatagramRequestHandler):
     """
 
     dicc_client = {}
+    # Variable aleatoria NONCE
+    NONCE = random.getrandbits(100)
+
 
     def handle(self):
         # Comprobación de que esté creado el archivo txt
@@ -134,10 +137,10 @@ class SIPProxyRegisterHandler(socketserver.DatagramRequestHandler):
                     Client = lista[0].split(':')[1]
                     lista0 = lista[0].split(':')[2]
                     Port_UA = lista0.split(' ')[0]
-                    NONCE = random.getrandbits(100)
                     if len(lista) == 4:
-                        mssg = 'SIP/2.0 401 Unauthorized\r\n\r\n'
-                        mssg += 'WWW Authenticate: nonce=' + str(NONCE)
+                        mssg = 'SIP/2.0 401 Unauthorized\r\n'
+                        mssg += 'WWW Authenticate: nonce=' + str(self.NONCE)
+                        mssg += '\r\n\r\n'
                         # Enviamos el mensaje de respuesta al REGISTER sin
                         # Autenticación
                         self.wfile.write(bytes(mssg, 'utf-8'))
@@ -145,13 +148,10 @@ class SIPProxyRegisterHandler(socketserver.DatagramRequestHandler):
                         Event = ' Send to '
                         Datos_Log(PATH_LOG, Event, Ip, Port_UA, mssg)
                     elif len(lista) == 5:
-                        print("por aqui")
                         Psswd_Salto_Linea = lista[2].split('response=')[1]
                         Psswd = Psswd_Salto_Linea.split('\r\n')[0]
-                        print(Psswd)
                         Found = self.CheckPsswd(DATA_PASSWDPATH, Psswd, Client,
-                                                Ip, Puerto, NONCE)
-                        print(Found)
+                                                Ip, Puerto)
                         if Found == 'True':
                             try:
                                 Expires = lista[1].split(' ')[1]
@@ -277,20 +277,17 @@ class SIPProxyRegisterHandler(socketserver.DatagramRequestHandler):
             if not line:
                 break
 
-    def CheckPsswd(self, Path, Passwd, User_agent, Ip, Puerto, NONCE):
+    def CheckPsswd(self, Path, Passwd, User_agent, Ip, Puerto):
         Found = 'False'
         fich = open(Path, 'r')
         lines = fich.readlines()
         for line in range(len(lines)):
             User = lines[line].split(' ')[1]
             Password = lines[line].split(' ')[3]
-            Nonce = str(NONCE)
-            print("NONCE: " + Nonce)
+            Nonce = str(self.NONCE))
             m = hashlib.md5()
             m.update(bytes(Password + Nonce, 'utf-8'))
             RESPONSE = m.hexdigest()
-            print(RESPONSE)
-            print(Passwd)
             if User == User_agent:
                 if RESPONSE == Passwd:
                     Found = 'True'
