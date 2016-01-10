@@ -130,12 +130,12 @@ class SIPProxyRegisterHandler(socketserver.DatagramRequestHandler):
             Datos_Log(PATH_LOG, Evento, Ip, Puerto, line_decod)
             if len(line_decod) >= 2:
                 if METHOD == 'REGISTER':
-                    lista = line_decod.split('\r\n\r\n')
+                    lista = line_decod.split('\r\n')
                     Client = lista[0].split(':')[1]
                     lista0 = lista[0].split(':')[2]
                     Port_UA = lista0.split(' ')[0]
-                    NONCE = random.getrandbits(898989898)
-                    if len(lista) == 2:
+                    NONCE = random.getrandbits(100)
+                    if len(lista) == 4:
                         mssg = 'SIP/2.0 401 Unauthorized\r\n\r\n'
                         mssg += 'WWW Authenticate: nonce=' + str(NONCE)
                         # Enviamos el mensaje de respuesta al REGISTER sin
@@ -144,15 +144,18 @@ class SIPProxyRegisterHandler(socketserver.DatagramRequestHandler):
                         # Escribimos los mensages de envio en el log
                         Event = ' Send to '
                         Datos_Log(PATH_LOG, Event, Ip, Port_UA, mssg)
-                    elif len(lista) == 3:
+                    elif len(lista) == 5:
                         print("por aqui")
-                        Passwd_Nonce = int(lista[2].split('response=')[1])
-                        Passwd = Passwd_Nonce - NONCE
-                        self.CheckPsswd(DATA_PASSWDPATH, Passwd, Client, Found,
-                                        Ip, Puerto)
-                        if Found:
+                        Psswd_Salto_Linea = lista[2].split('response=')[1]
+                        Psswd = Psswd_Salto_Linea.split('\r\n')[0]
+                        print(Psswd)
+                        Found = self.CheckPsswd(DATA_PASSWDPATH, Psswd, Client,
+                                        Ip, Puerto, NONCE)
+                        print(Found)
+                        if Found == 'True':
                             try:
-                                Expires = lista[2].split(' ')[1]
+                                Expires = lista[1].split(' ')[1]
+                                print(Expires)
                                 if Expires == '0':
                                     del self.dicc_client[Client]
                                     Event = ' Borrando ' + Client
@@ -164,11 +167,14 @@ class SIPProxyRegisterHandler(socketserver.DatagramRequestHandler):
                                     cliente = [Ip, Port_UA, Now, Exp, Time_Sum]
                                     self.dicc_client[Client] = cliente
                                 messg = "SIP/2.0 200 OK\r\n\r\n"
+                                print(messg)
                                 self.wfile.write(bytes(messg, 'utf-8'))
                                 # Escribimos el mensage de envio en el log
                                 Event = ' Send to '
                                 Datos_Log(PATH_LOG, Event, Ip, Puerto, messg)
                                 register2txt(DATABASE_PATH, Ip, Client)
+                                print(messg)
+                                print(self.dicc_client)
 
                             except:
                                 messg = "Expires no es un entero\r\n\r\n"
@@ -271,15 +277,22 @@ class SIPProxyRegisterHandler(socketserver.DatagramRequestHandler):
             if not line:
                 break
 
-    def CheckPsswd(self, Path, Passwd, User_agent, Found, Ip, Puerto):
+    def CheckPsswd(self, Path, Passwd, User_agent, Ip, Puerto, NONCE):
         Found = 'False'
         fich = open(Path, 'r')
         lines = fich.readlines()
         for line in range(len(lines)):
             User = lines[line].split(' ')[1]
-            Password = lines[line].split(' ')[4]
+            Password = lines[line].split(' ')[3]
+            Nonce = str(NONCE)
+            print("NONCE: " + Nonce)
+            m = hashlib.md5()
+            m.update(bytes(Password + Nonce, 'utf-8'))
+            RESPONSE = m.hexdigest()
+            print(RESPONSE)
+            print(Passwd)
             if User == User_agent:
-                if Password == Passwd:
+                if RESPONSE == Passwd:
                     Found = 'True'
                 else:
                     message = 'Acceso denegado: password is incorrect\r\n\r\n'
@@ -288,6 +301,7 @@ class SIPProxyRegisterHandler(socketserver.DatagramRequestHandler):
                     Event = ' Send to '
                     Datos_Log(PATH_LOG, Event, Ip, Puerto, message)
         fich.close()
+        return Found
 
     def register2txt(self, Path, Ip, Client):
         """
