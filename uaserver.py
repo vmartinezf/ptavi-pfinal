@@ -70,9 +70,6 @@ def Datos_Log(fichero, evento, ip, port, line):
 
 
 def Response_INVITE(username, ipserver, port, message_send):
-    message_send = b'SIP/2.0 100 Trying\r\n\r\n'
-    message_send += b'SIP/2.0 180 Ring\r\n\r\n'
-    message_send += b'SIP/2.0 200 OK\r\n\r\n'
     message_send += b'Content-Type: application/sdp\r\n\r\n'
     message_send += b'v=0\r\n'
     message_send += b'o=' + username + ' ' + ipserver
@@ -98,6 +95,9 @@ class EchoHandler(socketserver.DatagramRequestHandler):
                 Evento = ' Received from '
                 Datos_Log(PATH_LOG, Evento, IP_PROXY, PORT_PROXY, line_decod)
                 if METHOD == 'INVITE':
+                    messg = b'SIP/2.0 100 Trying\r\n\r\n'
+                    messg += b'SIP/2.0 180 Ring\r\n\r\n'
+                    messg += b'SIP/2.0 200 OK\r\n\r\n'   
                     Response_INVITE(USER_NAME, UASERVER_IP, PORT_AUDIO, messg)
                     # Enviamos el mensaje de respuesta al INVITE
                     self.wfile.write(messg)
