@@ -131,26 +131,20 @@ class SIPProxyRegisterHandler(socketserver.DatagramRequestHandler):
             if len(line_decod) >= 2:
                 if METHOD == 'REGISTER':
                     lista = line_decod.split('\r\n\r\n')
-                    print(lista)
                     Client = lista[0].split(':')[1]
-                    print(Client)
                     lista0 = lista[0].split(':')[2]
                     Port_UA = lista0.split(' ')[0]
                     NONCE = random.getrandbits(898989898)
-                    print(len(lista))
                     if len(lista) == 2:
                         # Comprobación de si el usuario está registrado o no
-                        print("aqui")
                         User_R = register2registered(self.dicc_client, Client)
-                        print(User_R)
                         # En función de si está registrado o no actuamos de
                         # diferente forma
-                        if User_R == 0:
+                        if User_R == '0':
                             mssg = "SIP/2.0 404 User Not Found\r\n\r\n"
-                            print(mssg)
                             # Ecribimos los datos que se envian en el log
                             Event = ' Send to '
-                            Datos_Log(PATH_LOG, Event, Ip, Puerto, mssg)
+                            Datos_Log(PATH_LOG, Event, Ip, Port_UA, mssg)
                         else:
                             print("hola")
                             mssg = 'SIP/2.0 401 Unauthorized\r\n\r\n'
@@ -205,7 +199,7 @@ class SIPProxyRegisterHandler(socketserver.DatagramRequestHandler):
                     Usuario_Regist = register2registered(self.dicc_client, UA)
                     # En función de si está registrado o no actuamos de
                     # diferente forma
-                    if Usuario_Regist == 0:
+                    if Usuario_Regist == '0':
                         mssg = "SIP/2.0 404 User Not Found\r\n\r\n"
                         # Ecribimos los datos que se envian en el log
                         Event = ' Send to '
@@ -232,7 +226,7 @@ class SIPProxyRegisterHandler(socketserver.DatagramRequestHandler):
                     UA = Sip_direccion.split(':')[1]
                     # Comprobación de si el usuario está registrado o no
                     Usuario_Regist = register2registered(self.dicc_client, UA)
-                    if Usuario_Regist == 0:
+                    if Usuario_Regist == '0':
                         mssg = "SIP/2.0 404 User Not Found\r\n\r\n"
                         # Ecribimos los datos que se envian en el log
                         Event = ' Send to '
@@ -251,7 +245,7 @@ class SIPProxyRegisterHandler(socketserver.DatagramRequestHandler):
                     UA = Sip_direccion.split(':')[1]
                     # Comprobación de si el usuario está registrado o no
                     Usuario_Regist = register2registered(self.dicc_client, UA)
-                    if Usuario_Regist == 0:
+                    if Usuario_Regist == '0':
                         mssg = "SIP/2.0 404 User Not Found\r\n\r\n"
                         # Ecribimos los datos que se envian en el log
                         Event = ' Send to '
