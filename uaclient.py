@@ -78,7 +78,10 @@ if __name__ == "__main__":
             LINE = Line_Sip + OPTION + " SIP/2.0\r\n"
         else:
             LINE = Line_Sip + OPTION + " SIP/2.0\r\n"
-        
+    except:
+        sys.exit("Usage: python uaclient.py config method option")
+
+    try:        
         # Creamos el socket, lo configuramos y lo atamos a un servidor/puerto
         my_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         my_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
@@ -130,7 +133,7 @@ if __name__ == "__main__":
             data = my_socket.recv(1024)
         elif lista == ['SIP/2.0 400 Bad Request']:
             sys.exit("Usage: python uaclient.py config method option")
-        elif lista == ['SIP/2.0 404 User Not Found Request']:
+        elif lista == ['SIP/2.0 404 User Not Found']:
             sys.exit("Usage: User not Found")
         elif lista[0] == 'SIP/2.0 401 Unauthorized':
             m = hashlib.md5()
