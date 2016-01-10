@@ -89,7 +89,7 @@ if __name__ == "__main__":
 
         # Estamos enviando datos
         my_socket.send(bytes(LINE, 'utf-8') + b'\r\n')
-    except:
+    except socket.error:
         Evento = 'Error'
         Datos_Log(PATH_LOG, Evento, IP_PROXY, PORT_PROXY, '')
         sys.exit("Error: No server listening")
@@ -144,14 +144,17 @@ if __name__ == "__main__":
             Event = ' Terminando el envío RTP '
             Datos_Log(PATH_LOG, Event, '', '', '')
             data = my_socket.recv(1024)
-        elif lista[0] == 'SIP/2.0 401 Unauthorized':
+        elif lista == ['SIP/2.0 401 Unauthorized']:
             m = hashlib.md5()
-            Nonce = lista[1].split('=')[1]
+            Nonce_Salto_Linea = data_decod.split('nonce=')[1]
+            Nonce = Nonce_Salto_Linea.split('\r\n')[0]
+            print(Nonce)
             m.update(bytes(PASSWD + Nonce, 'utf-8'))
             RESPONSE = m.hexdigest()
+            print(RESPONSE)
             LINE_REGIST = Line_Sip + USER_NAME + ":" + UASERVER_PORT
             LINE_REGIST += " SIP/2.0\r\n" + "Expires: " + OPTION + "\r\n"
-            LINE_REGIST  = "Authorization: response=" + RESPONSE + "\r\n"
+            LINE_REGIST  += "Authorization: response=" + RESPONSE + "\r\n"
             try:
                 my_socket.send(bytes(LINE_REGIST, 'utf-8') + b'\r\n')
             except:
@@ -160,7 +163,7 @@ if __name__ == "__main__":
                 sys.exit("Error: No server listening")
             # Escribimos en el log los datos que enviamos
             Evento = ' Send to '
-            Datos_Log(PATH_LOG, Evento, IP_PROXY, PORT_PROXY, LINEREGIST)
+            Datos_Log(PATH_LOG, Evento, IP_PROXY, PORT_PROXY, LINE_REGIST)
             data = my_socket.recv(1024)
         elif lista == ['Acceso denegado: password is incorrect']:
             print("Usage: The Password is incorrect")
@@ -179,4 +182,6 @@ if __name__ == "__main__":
         print("Fin.")
 
     except:
-        sys.exit("Usage: python uaclient.py config method option")
+        Evento = 'Error'
+        Datos_Log(PATH_LOG, Evento, IP_PROXY, PORT_PROXY, '')
+        sys.exit("Error: No server listening")
