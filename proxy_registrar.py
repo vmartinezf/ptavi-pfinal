@@ -93,7 +93,7 @@ def Time_Caduced(dicc_client):
     # Función para actualizar el diccionario, elimina cientes que tengan el
     # Expires caducado
     for Client in dicc_client:
-        Expiration = int(dicc_client[Client][3])
+        Expiration = int(dicc_client[Client][4])
         Time_now = int(time.time())
         if Time_now >= Expiration:
             del dicc_client[Client]
@@ -147,12 +147,15 @@ class SIPProxyRegisterHandler(socketserver.DatagramRequestHandler):
                         # diferente forma
                         if User_R == 0:
                             mssg = "SIP/2.0 404 User Not Found\r\n\r\n"
+                            print(mssg)
                             # Ecribimos los datos que se envian en el log
                             Event = ' Send to '
-                            Datos_Log(Path, Event, Ip, Puerto, mssg)
+                            Datos_Log(PATH_LOG, Event, Ip, Puerto, mssg)
                         else:
+                            print("hola")
                             mssg = 'SIP/2.0 401 Unauthorized\r\n\r\n'
                             mssg += 'WWW Authenticate: nonce=' + str(NONCE)
+                            print(mssg)
                         # Enviamos el mensaje de respuesta al REGISTER sin
                         # Autenticación
                         print(mssg)
