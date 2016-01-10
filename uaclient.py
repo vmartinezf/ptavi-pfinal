@@ -113,6 +113,8 @@ if __name__ == "__main__":
         Trying = 'SIP/2.0 100 Trying'
         Ring = 'SIP/2.0 180 Ring'
         OK = 'SIP/2.0 200 OK'
+        Not_Found = 'SIP/2.0 404 User Not Found'
+        Bad_R = 'SIP/2.0 400 Bad Request'
         if lista[0:3] == [Trying, Ring, OK]:
             LINEACK = "ACK" + " sip:" + OPTION + " SIP/2.0\r\n"
             try:
@@ -142,11 +144,6 @@ if __name__ == "__main__":
             Event = ' Terminando el envío RTP '
             Datos_Log(PATH_LOG, Event, '', '', '')
             data = my_socket.recv(1024)
-        elif lista == ['SIP/2.0 400 Bad Request']:
-            sys.exit("Usage: python uaclient.py config method option")
-        elif lista == ['SIP/2.0 404 User Not Found']:
-            print("hola")
-            #sys.exit("Usage: User not Found")
         elif lista[0] == 'SIP/2.0 401 Unauthorized':
             m = hashlib.md5()
             Nonce = lista[1].split('=')[1]
@@ -166,10 +163,10 @@ if __name__ == "__main__":
             Datos_Log(PATH_LOG, Evento, IP_PROXY, PORT_PROXY, LINEREGIST)
             data = my_socket.recv(1024)
         elif lista == ['Acceso denegado: password is incorrect']:
-            sys.exit("Usage: The Password is incorrect")
+            print("Usage: The Password is incorrect")
         elif lista == ['Expires no es un entero']:
-            sys.exit("Usage: Expires no es un entero")
-        elif lista != OK:
+            print("Usage: Expires no es un entero")
+        elif lista != OK and lista != Bad_R and lista!= Not_Found:
             # Escribimos en el log el mensaje de error
             Evento = 'Error: Method incorrect'
             Datos_Log(PATH_LOG, Evento, '', '', '')
