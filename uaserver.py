@@ -182,8 +182,6 @@ if __name__ == "__main__":
     except IOError:
         sys.exit("Usage: python uaserver.py config")
     try:
-        print(UASERVER_PORT)
-        print(UASERVER_IP)
         PORT = int(UASERVER_PORT)
         serv = socketserver.UDPServer((UASERVER_IP, PORT), EchoHandler)
         print("Listening...")
