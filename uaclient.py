@@ -68,8 +68,7 @@ if __name__ == "__main__":
             LINE = Line_Sip + USER_NAME + ":" + UASERVER_PORT
             LINE += " SIP/2.0\r\n" + "Expires: " + OPTION + "\r\n"
         elif METHOD == 'INVITE':
-            IP = UASERVER_IP
-            LINE = Line_Sip + option + " SIP/2.0\r\n"
+            LINE = Line_Sip + OPTION + " SIP/2.0\r\n"
             LINE += "Content-Type: application/sdp\r\n\r\n"
             LINE += "v=0\r\n" + "o=" + USER_NAME + " " + UASERVER_IP + " \r\n"
             LINE += "s=misesion\r\n" + "t=0\r\n"
@@ -89,6 +88,7 @@ if __name__ == "__main__":
 
         # Estamos enviando datos
         my_socket.send(bytes(LINE, 'utf-8') + b'\r\n')
+        print(LINE)
     except socket.error:
         Evento = 'Error'
         Datos_Log(PATH_LOG, Evento, IP_PROXY, PORT_PROXY, '')
@@ -150,10 +150,8 @@ if __name__ == "__main__":
             m = hashlib.md5()
             Nonce_Salto_Linea = data_decod.split('nonce=')[1]
             Nonce = Nonce_Salto_Linea.split('\r\n\r\n')[0]
-            print(Nonce)
             m.update(bytes(PASSWD + Nonce, 'utf-8'))
             RESPONSE = m.hexdigest()
-            print(RESPONSE)
             LINE_REGIST = Line_Sip + USER_NAME + ":" + UASERVER_PORT
             LINE_REGIST += " SIP/2.0\r\n" + "Expires: " + OPTION + "\r\n"
             LINE_REGIST  += "Authorization: response=" + RESPONSE + "\r\n"
@@ -167,6 +165,10 @@ if __name__ == "__main__":
             Evento = ' Send to '
             Datos_Log(PATH_LOG, Evento, IP_PROXY, PORT_PROXY, LINE_REGIST)
             data = my_socket.recv(1024)
+            data_decod = data.decode('utf-8')
+            # Escribimos el mensaje en el archivo de log el mensaje recibido
+            Evento = ' Received from '
+            Datos_Log(PATH_LOG, Evento, IP_PROXY, PORT_PROXY, data_decod)
         elif lista == ['Acceso denegado: password is incorrect']:
             print("Usage: The Password is incorrect")
         elif lista == ['Expires no es un entero']:
