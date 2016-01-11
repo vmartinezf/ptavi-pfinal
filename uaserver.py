@@ -5,6 +5,7 @@ Clases (y programa principal) para un uaserver de eco en UDP simple
 """
 
 import socketserver
+import socket
 import sys
 import os
 import os.path
@@ -69,14 +70,6 @@ def Datos_Log(fichero, evento, ip, port, line):
     fich.close()
 
 
-def Response_INVITE(username, ipserver, port, message_send):
-    message_send += b'Content-Type: application/sdp\r\n\r\n'
-    message_send += b'v=0\r\n'
-    message_send += b'o=' + username + ' ' + ipserver
-    message_send += b' \r\n' + 's=misesion\r\n' + 't=0\r\n'
-    message_send += b'm=audio ' + port + ' RTP\r\n\r\n'
-
-
 class EchoHandler(socketserver.DatagramRequestHandler):
     """
     Echo server class
@@ -89,22 +82,28 @@ class EchoHandler(socketserver.DatagramRequestHandler):
             line = self.rfile.read()
             line_decod = line.decode('utf-8')
             METHOD = line_decod.split(' ')[0].upper()
+            print(line_decod)
             METHODS = ['INVITE', 'BYE', 'ACK']
             if len(line_decod) >= 2:
                 # Escribimos mensages de recepción en el fichero de log
                 Evento = ' Received from '
                 Datos_Log(PATH_LOG, Evento, IP_PROXY, PORT_PROXY, line_decod)
                 if METHOD == 'INVITE':
-                    messg = b'SIP/2.0 100 Trying\r\n\r\n'
-                    messg += b'SIP/2.0 180 Ring\r\n\r\n'
-                    messg += b'SIP/2.0 200 OK\r\n\r\n'   
-                    Response_INVITE(USER_NAME, UASERVER_IP, PORT_AUDIO, messg)
+                    messg = 'SIP/2.0 100 Trying\r\n\r\n'
+                    messg += 'SIP/2.0 180 Ring\r\n\r\n'
+                    messg += 'SIP/2.0 200 OK\r\n\r\n'
+                    messg += 'Content-Type: application/sdp\r\n\r\n'
+                    messg += 'v=0\r\n'
+                    messg += 'o=' + USER_NAME + ' ' + UASERVER_IP
+                    messg += ' \r\n' + 's=misesion\r\n' + 't=0\r\n'
+                    messg += 'm=audio ' + PORT_AUDIO + ' RTP\r\n\r\n'
                     # Enviamos el mensaje de respuesta al INVITE
-                    self.wfile.write(messg)
+                    print(messg)
+                    self.wfile.write(bytes(messg, 'utf-8'))
+                    print(messg)
                     # Escribimos los mensages de envio en el log
                     Event = ' Send to '
-                    mssg = messg.decode('utf-8')
-                    Datos_Log(PATH_LOG, Event, IP_PROXY, PORT_PROXY, mssg)
+                    Datos_Log(PATH_LOG, Event, IP_PROXY, PORT_PROXY, messg)
                 elif METHOD == 'ACK':
                     os.system('chmod 777 mp32rtp')
                     # Contenido del archivo de audio a ejecutar
@@ -182,7 +181,14 @@ if __name__ == "__main__":
 
     except IOError:
         sys.exit("Usage: python uaserver.py config")
-    PORT = int(UASERVER_PORT)
-    serv = socketserver.UDPServer((UASERVER_IP, PORT), EchoHandler)
-    print("Listening...")
-    serv.serve_forever()
+    try:
+        print(UASERVER_PORT)
+        print(UASERVER_IP)
+        PORT = int(UASERVER_PORT)
+        serv = socketserver.UDPServer((UASERVER_IP, PORT), EchoHandler)
+        print("Listening...")
+        serv.serve_forever()
+    except:
+        Evento = 'Error'
+        Datos_Log(PATH_LOG, Evento, IP_PROXY, PORT_PROXY, '')
+        sys.exit("Error: No server listening")
