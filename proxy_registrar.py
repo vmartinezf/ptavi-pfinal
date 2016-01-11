@@ -86,6 +86,15 @@ def Time_Caduced(dicc_client):
             del dicc_client[Client]
 
 
+def Mssg_Error(Path, Ip, Puerto):
+    # Escribimos en el log el mensaje de error
+    Event = 'Error'
+    Datos_Log(Path, Event, Ip, Puerto, '')
+    Error = "Error: No server listening at "
+    Error += Ip + " Port " + Puerto + '\r\n'
+    sys.exit(Error)
+
+
 class SIPProxyRegisterHandler(socketserver.DatagramRequestHandler):
     """
     Echo proxy class
@@ -184,17 +193,10 @@ class SIPProxyRegisterHandler(socketserver.DatagramRequestHandler):
                         # Datos de la ip y puerto del usuario registrado
                         Ip_Regist = Usuario_Regist[0]
                         Port_Regist = Usuario_Regist[1]
-                        print(Ip_Regist)
-                        print(Port_Regist)
-
-                        # Abrimos un socket y enviamos
-                        print("hiiiiiiiiiiiiiiiii")
-                        Open_Socket(PATH_LOG, Ip_Regist, Port_Regist, line)
-                        print("mierda")
                         # Miramos que la conexión sea segura y se envían datos
                         # o se hace sys.exit en función de la conexión
-                        self.Conexion_Segura(PATH_LOG, Port_Regist, Ip_Regist)
-                        print("jjajsjajsajjas")
+                        self.Conexion_Segura(PATH_LOG, Port_Regist, Ip_Regist, 
+                                            line)
 
                 elif METHOD == 'ACK':
                     Sip_direccion = line_decod.split(' ')[1]
@@ -230,13 +232,10 @@ class SIPProxyRegisterHandler(socketserver.DatagramRequestHandler):
                         # Datos de la ip y puerto del usuario registrado
                         Ip_Regist = Usuario_Regist[0]
                         Port_Regist = int(Usuario_Regist[1])
-
-                        # Abrimos un socket y enviamos
-                        Open_Socket(PATH_LOG, Ip_Regist, Port_Regist, line)
-                        print("hiiiiiiiiiiiiii")
                         # Miramos que la conexión sea segura y se envían datos
                         # o se hace sys.exit en función de la conexión
-                        self.Conexion_Segura(PATH_LOG, Port_Regist, Ip_Regist)
+                        self.Conexion_Segura(PATH_LOG, Port_Regist, Ip_Regist, 
+                                            line)
 
                 elif METHOD not in METHODS:
                     mssg_send = 'SIP/2.0 405 Method Not Allowed\r\n\r\n'
@@ -294,32 +293,39 @@ class SIPProxyRegisterHandler(socketserver.DatagramRequestHandler):
             fich.write(Line)
         fich.close()
 
-    def Conexion_Segura(self, Path, Port, Ip):
+    def Conexion_Segura(self, Path, Port, Ip, Line):
         Puerto = str(Port)
         try:
-            print("aquiiiiii")
-            data = my_socket.recv(1024)
+            # Abrimos un socket para reeenviar el mensaje a la
+            # direccion que va dirigido
+            my_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+            my_socket.setsockopt(socket.SOL_SOCKET,  socket.SO_REUSEADDR, 1)
+            my_socket.connect((Ip, int(Port)))
+            my_socket.send(Line)
+            # Escribimos el mensaje de envio en el archivo de log
+            Puerto = str(Port)
+            Event = ' Send to '
+            Line_decod = Line.decode('utf-8')
+            Datos_Log(PATH_LOG, Event, Ip, Puerto, Line_decod)
+        except socket.error:
+            Mssg_Error(Path, Ip, Puerto)
+        try:
+            data = my_socket.recv(1024) 
             print("recibiendo")
             data_decod = data.decode('utf-8')
-            print("decodificamos")
+        except socket.error:
+            Mssg_Error(Path, Ip, Puerto)
+        try:
             # Escribimos mensages de recepción en el fichero de log
             Evento = ' Received from '
             Datos_Log(PATH_LOG, Evento, Ip, Puerto, data_decod)
-            print("@@@@@@@@@@@@@222")
             # Si hay un server escuchando seguimos y enviamos
-            print("hiiiii")
             self.wfile.write(bytes(data_decod, 'utf-8'))
-            print("que pasa")
             # Escribimos en el log el mensage enviado
             Event = ' Send to '
             Datos_Log(PATH_LOG, Event, Ip, Puerto, data_decod)
         except:
-            # Escribimos en el log el mensaje de error
-            Event = 'Error'
-            Datos_Log(Path, Event, Ip, Puerto, '')
-            Error = "Error: No server listening at "
-            Error += Ip + " Port " + Puerto + '\r\n'
-            print(Error)
+            Mssg_Error(Path, Ip, Puerto)
 
 
 if __name__ == "__main__":
