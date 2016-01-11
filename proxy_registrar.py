@@ -5,6 +5,7 @@ Programa Proxy registrar y clase del proxy
 """
 
 import socketserver
+import socket
 import sys
 import time
 import os
@@ -59,29 +60,15 @@ def Open_Socket(Path, Ip, Port, Line):
     # Escribimos el mensaje de envio en el archivo de log
     Puerto = str(Port)
     Event = ' Send to '
-    Datos_Log(PATH_LOG, Event, Ip, Puerto, Line)
-
-
-def Conexion_Segura(Path, Port, Ip, data_decod):
-    Puerto = str(Port)
-    try:
-        data = my_socket.recv(1024)
-        data_decod = data.decode('utf-8')
-        # Escribimos mensages de recepción en el fichero de log
-        Evento = ' Received from '
-        Datos_Log(PATH_LOG, Evento, Ip, Puerto, data_decod)
-    except:
-        # Escribimos en el log el mensaje de error
-        Event = 'Error'
-        Datos_Log(Path, Event, Ip, Puerto, '')
-        Error = ip + "Port" + Puerto + '\r\n'
-        sys.exit("Error: No server listening at " + Error)
+    Line_decod = Line.decode('utf-8')
+    Datos_Log(PATH_LOG, Event, Ip, Puerto, Line_decod)
 
 
 def register2registered(dicc_client, Client):
     # Función para ver si un usuario está registrado, nos devuelve 0 si el
     # usuario no está registrado con ninguna de las claves, en caso cotrario se
     # devuelven los datos del cliente
+    print(dicc_client)
     if Client not in dicc_client.keys():
         datos = '0'
     else:
@@ -110,8 +97,6 @@ class SIPProxyRegisterHandler(socketserver.DatagramRequestHandler):
 
 
     def handle(self):
-        # Comprobación de que esté creado el archivo txt
-        self.txt2registered()
 
         # Actualizamos el diccionario de clientes por si ha caducado el Espires
         # de algún cliente
@@ -172,9 +157,7 @@ class SIPProxyRegisterHandler(socketserver.DatagramRequestHandler):
                                 # Escribimos el mensage de envio en el log
                                 Event = ' Send to '
                                 Datos_Log(PATH_LOG, Event, Ip, Puerto, messg)
-                                register2txt(DATABASE_PATH, Ip, Client)
-                                print(messg)
-                                print(self.dicc_client)
+                                self.register2txt(DATABASE_PATH, Ip, Client)
 
                             except:
                                 messg = "Expires no es un entero\r\n\r\n"
@@ -195,23 +178,23 @@ class SIPProxyRegisterHandler(socketserver.DatagramRequestHandler):
                         mssg = "SIP/2.0 404 User Not Found\r\n\r\n"
                         # Ecribimos los datos que se envian en el log
                         Event = ' Send to '
-                        Datos_Log(Path, Event, Ip, Puerto, mssg)
+                        Datos_Log(PATH_LOG, Event, Ip, Puerto, mssg)
                         self.wfile.write(bytes(mssg, 'utf-8'))
                     else:
                         # Datos de la ip y puerto del usuario registrado
                         Ip_Regist = Usuario_Regist[0]
-                        Port_Regist = int(Usuario_Regist[1])
+                        Port_Regist = Usuario_Regist[1]
+                        print(Ip_Regist)
+                        print(Port_Regist)
 
                         # Abrimos un socket y enviamos
+                        print("hiiiiiiiiiiiiiiiii")
                         Open_Socket(PATH_LOG, Ip_Regist, Port_Regist, line)
+                        print("mierda")
                         # Miramos que la conexión sea segura y se envían datos
                         # o se hace sys.exit en función de la conexión
-                        Conexion_Segura(PATH_LOG, Port_Regist, Ip_Regist, data)
-                        # Si hay un server escuchando seguimos y enviamos
-                        self.wfile.write(bytes(data, 'utf-8'))
-                        # Escribimos en el log el mensage enviado
-                        Event = ' Send to '
-                        Datos_Log(PATH_LOG, Event, Ip, Puerto, data)
+                        self.Conexion_Segura(PATH_LOG, Port_Regist, Ip_Regist)
+                        print("jjajsjajsajjas")
 
                 elif METHOD == 'ACK':
                     Sip_direccion = line_decod.split(' ')[1]
@@ -250,14 +233,10 @@ class SIPProxyRegisterHandler(socketserver.DatagramRequestHandler):
 
                         # Abrimos un socket y enviamos
                         Open_Socket(PATH_LOG, Ip_Regist, Port_Regist, line)
+                        print("hiiiiiiiiiiiiii")
                         # Miramos que la conexión sea segura y se envían datos
                         # o se hace sys.exit en función de la conexión
-                        Conexion_Segura(PATH_LOG, Port_Regist, Ip_Regist, data)
-                        # Si hay un server escuchando seguimos y enviamos
-                        self.wfile.write(bytes(data, 'utf-8'))
-                        # Escribimos en el log el mensage enviado
-                        Event = ' Send to '
-                        Datos_Log(PATH_LOG, Event, Ip, Puerto, data)
+                        self.Conexion_Segura(PATH_LOG, Port_Regist, Ip_Regist)
 
                 elif METHOD not in METHODS:
                     mssg_send = 'SIP/2.0 405 Method Not Allowed\r\n\r\n'
@@ -284,7 +263,7 @@ class SIPProxyRegisterHandler(socketserver.DatagramRequestHandler):
         for line in range(len(lines)):
             User = lines[line].split(' ')[1]
             Password = lines[line].split(' ')[3]
-            Nonce = str(self.NONCE))
+            Nonce = str(self.NONCE)
             m = hashlib.md5()
             m.update(bytes(Password + Nonce, 'utf-8'))
             RESPONSE = m.hexdigest()
@@ -300,34 +279,47 @@ class SIPProxyRegisterHandler(socketserver.DatagramRequestHandler):
         fich.close()
         return Found
 
-    def register2txt(self, Path, Ip, Client):
+    def register2txt(self, Path, ip, direction):
         """
         Función de registro de usuarios en el archivo database.txt
         """
-        fich = open(Path, "w")
-        Linea = "Usuario\tIP\tPuerto\t" + "Fecha de Registro\t"
-        Linea += "Tiempo de expiracion\r\n"
-        fich.write(Linea)
+        fich = open(Path, "a")
         for Client in self.dicc_client:
             Ip = self.dicc_client[Client][0]
             Port = self.dicc_client[Client][1]
-            Fecha_Registro = self.dic_clientes[Client][2]
-            Expiration = self.dic_clientes[Client][3]
+            Fecha_Registro = self.dicc_client[Client][2]
+            Expiration = self.dicc_client[Client][3]
             Line = Client + "\t" + Ip + "\t" + str(Port) + "\t"
             Line += str(Fecha_Registro) + "\t\t" + str(Expiration) + "\r\n"
             fich.write(Line)
         fich.close()
 
-    def txt2registered(self):
-        """
-        Comprobar la existencia del fichero json y se actua en función
-        de si existe o no
-        """
-        fichero_txt = DATABASE_PATH
+    def Conexion_Segura(self, Path, Port, Ip):
+        Puerto = str(Port)
         try:
-            self.dicc_client = txt.loads(open(DATABASE_PATH).read())
+            print("aquiiiiii")
+            data = my_socket.recv(1024)
+            print("recibiendo")
+            data_decod = data.decode('utf-8')
+            print("decodificamos")
+            # Escribimos mensages de recepción en el fichero de log
+            Evento = ' Received from '
+            Datos_Log(PATH_LOG, Evento, Ip, Puerto, data_decod)
+            print("@@@@@@@@@@@@@222")
+            # Si hay un server escuchando seguimos y enviamos
+            print("hiiiii")
+            self.wfile.write(bytes(data_decod, 'utf-8'))
+            print("que pasa")
+            # Escribimos en el log el mensage enviado
+            Event = ' Send to '
+            Datos_Log(PATH_LOG, Event, Ip, Puerto, data_decod)
         except:
-            self.dicc_client = {}
+            # Escribimos en el log el mensaje de error
+            Event = 'Error'
+            Datos_Log(Path, Event, Ip, Puerto, '')
+            Error = "Error: No server listening at "
+            Error += Ip + " Port " + Puerto + '\r\n'
+            print(Error)
 
 
 if __name__ == "__main__":
@@ -353,6 +345,12 @@ if __name__ == "__main__":
         DATABASE_PATH = lista[1]['database']['path']
         DATA_PASSWDPATH = lista[1]['database']['passwdpath']
         PATH_LOG = lista[2]['log']['path']
+
+        fich = open(DATABASE_PATH , "a")
+        Linea = "Usuario\tIP\tPuerto\t" + "Fecha de Registro\t"
+        Linea += "Tiempo de expiracion\r\n"
+        fich.write(Linea)
+        fich.close()
 
     except:
         sys.exit("Usage: python proxy_registrar.py config")
