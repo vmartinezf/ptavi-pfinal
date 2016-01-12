@@ -110,18 +110,17 @@ if __name__ == "__main__":
 
         lista = data_decod.split('\r\n\r\n')[0:-1]
         Not_Aut = data_decod.split('\r\n')[0]
-        print(Not_Aut)
-        print(lista)
         Trying = 'SIP/2.0 100 Trying'
         Ring = 'SIP/2.0 180 Ring'
         OK = 'SIP/2.0 200 OK'
         Not_Found = 'SIP/2.0 404 User Not Found'
         Bad_R = 'SIP/2.0 400 Bad Request'
+        print(lista[0:3])
         if lista[0:3] == [Trying, Ring, OK]:
             LINEACK = "ACK" + " sip:" + OPTION + " SIP/2.0\r\n"
             try:
                 my_socket.send(bytes(LINEACK, 'utf-8') + b'\r\n')
-            except:
+            except socket.error:
                 Evento = 'Error'
                 Datos_Log(PATH_LOG, Evento, IP_PROXY, PORT_PROXY, '')
                 sys.exit("Error: No server listening")
@@ -130,8 +129,10 @@ if __name__ == "__main__":
             Datos_Log(PATH_LOG, Evento, IP_PROXY, PORT_PROXY, LINEACK)
 
             # RTP
+            Line_restante = data_decod.split('\r\n')[9]
             IP_RECEPT = lista[4].split(' ')[2]
-            PORT_RECEPT = lista[4].split(' ')[6]
+            Line_Port = data_decod.split('\r\n')[12]
+            PORT_RECEPT = Line_Port.split(' ')[1]
             os.system('chmod 777 mp32rtp')
             # Contenido del archivo de audio a ejecutar
             Primero_a_Ejecutar = './mp32rtp -i ' + IP_RECEPT + ' -p '
@@ -145,7 +146,9 @@ if __name__ == "__main__":
             # Escribimos el mensage de fin RTP en el log
             Event = ' Terminando el envío RTP '
             Datos_Log(PATH_LOG, Event, '', '', '')
+            print("hola")
             data = my_socket.recv(1024)
+            print("hiiiii")
         elif Not_Aut == 'SIP/2.0 401 Unauthorized':
             m = hashlib.md5()
             Nonce_Salto_Linea = data_decod.split('nonce=')[1]
@@ -157,7 +160,7 @@ if __name__ == "__main__":
             LINE_REGIST  += "Authorization: response=" + RESPONSE + "\r\n"
             try:
                 my_socket.send(bytes(LINE_REGIST, 'utf-8') + b'\r\n')
-            except:
+            except error.socket:
                 Evento = 'Error'
                 Datos_Log(PATH_LOG, Evento, IP_PROXY, PORT_PROXY, '')
                 sys.exit("Error: No server listening")
