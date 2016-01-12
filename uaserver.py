@@ -105,7 +105,6 @@ class EchoHandler(socketserver.DatagramRequestHandler):
                     Event = ' Send to '
                     Datos_Log(PATH_LOG, Event, IP_PROXY, PORT_PROXY, messg)
                 elif METHOD == 'ACK':
-                    os.system('chmod 777 mp32rtp')
                     # Contenido del archivo de audio a ejecutar
                     Primero_a_Ejecutar = './mp32rtp -i ' + IP_PROXY + ' -p '
                     Segundo_a_Ejecutar = str(PORT_AUDIO) + '<' + PATH_AUDIO
