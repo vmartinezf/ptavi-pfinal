@@ -68,7 +68,6 @@ def register2registered(dicc_client, Client):
     # Función para ver si un usuario está registrado, nos devuelve 0 si el
     # usuario no está registrado con ninguna de las claves, en caso cotrario se
     # devuelven los datos del cliente
-    print(dicc_client)
     if Client not in dicc_client.keys():
         datos = '0'
     else:
@@ -86,13 +85,11 @@ def Time_Caduced(dicc_client):
             del dicc_client[Client]
 
 
-def Mssg_Error(Path, Ip, Puerto):
+def Mssg_Error(Path, Ip, Port):
     # Escribimos en el log el mensaje de error
     Event = 'Error'
-    Datos_Log(Path, Event, Ip, Puerto, '')
-    Error = "Error: No server listening at "
-    Error += Ip + " Port " + Puerto + '\r\n'
-    sys.exit(Error)
+    Datos_Log(Path, Event, Ip, Port, '')
+    sys.exit("Error: No server listening at " + Ip + " Port " + Port + "\r\n")
 
 
 class SIPProxyRegisterHandler(socketserver.DatagramRequestHandler):
@@ -161,7 +158,6 @@ class SIPProxyRegisterHandler(socketserver.DatagramRequestHandler):
                                     cliente = [Ip, Port_UA, Now, Exp, Time_Sum]
                                     self.dicc_client[Client] = cliente
                                 messg = "SIP/2.0 200 OK\r\n\r\n"
-                                print(messg)
                                 self.wfile.write(bytes(messg, 'utf-8'))
                                 # Escribimos el mensage de envio en el log
                                 Event = ' Send to '
@@ -311,7 +307,6 @@ class SIPProxyRegisterHandler(socketserver.DatagramRequestHandler):
             Mssg_Error(Path, Ip, Puerto)
         try:
             data = my_socket.recv(1024) 
-            print("recibiendo")
             data_decod = data.decode('utf-8')
         except socket.error:
             Mssg_Error(Path, Ip, Puerto)
