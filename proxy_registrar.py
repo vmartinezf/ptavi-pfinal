@@ -78,11 +78,16 @@ def register2registered(dicc_client, Client):
 def Time_Caduced(dicc_client):
     # Función para actualizar el diccionario, elimina cientes que tengan el
     # Expires caducado
+    Lista = []
     for Client in dicc_client:
         Expiration = int(dicc_client[Client][4])
         Time_now = int(time.time())
         if Time_now >= Expiration:
-            del dicc_client[Client]
+            Lista.append(Client)
+    
+    # Borramos del diccionario los clientes expirados
+    for Usuario in Lista:
+        del dicc_client[Usuario]
 
 
 def Mssg_Error(Path, Ip, Port):
