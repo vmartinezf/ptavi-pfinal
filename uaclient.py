@@ -80,7 +80,7 @@ if __name__ == "__main__":
     except:
         sys.exit("Usage: python uaclient.py config method option")
 
-    try:        
+    try:
         # Creamos el socket, lo configuramos y lo atamos a un servidor/puerto
         my_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         my_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
@@ -88,7 +88,6 @@ if __name__ == "__main__":
 
         # Estamos enviando datos
         my_socket.send(bytes(LINE, 'utf-8') + b'\r\n')
-        print(LINE)
     except socket.error:
         Evento = 'Error'
         Datos_Log(PATH_LOG, Evento, IP_PROXY, PORT_PROXY, '')
@@ -101,7 +100,6 @@ if __name__ == "__main__":
         # Recibimos datos
         data = my_socket.recv(1024)
         data_decod = data.decode('utf-8')
-        print(data_decod)
 
         # Escribimos el mensaje en el archivo de log el mensaje recibido
         Evento = ' Received from '
@@ -115,7 +113,6 @@ if __name__ == "__main__":
         OK = 'SIP/2.0 200 OK'
         Not_Found = 'SIP/2.0 404 User Not Found'
         Bad_R = 'SIP/2.0 400 Bad Request'
-        print(lista[0:3])
         if lista[0:3] == [Trying, Ring, OK]:
             LINEACK = "ACK" + " sip:" + OPTION + " SIP/2.0\r\n"
             try:
@@ -154,7 +151,7 @@ if __name__ == "__main__":
             RESPONSE = m.hexdigest()
             LINE_REGIST = Line_Sip + USER_NAME + ":" + UASERVER_PORT
             LINE_REGIST += " SIP/2.0\r\n" + "Expires: " + OPTION + "\r\n"
-            LINE_REGIST  += "Authorization: response=" + RESPONSE + "\r\n"
+            LINE_REGIST += "Authorization: response=" + RESPONSE + "\r\n"
             try:
                 my_socket.send(bytes(LINE_REGIST, 'utf-8') + b'\r\n')
             except error.socket:
@@ -173,7 +170,7 @@ if __name__ == "__main__":
             print("Usage: The Password is incorrect")
         elif lista == ['Expires no es un entero']:
             print("Usage: Expires no es un entero")
-        elif lista != OK and lista != Bad_R and lista!= Not_Found:
+        elif lista != OK and lista != Bad_R and lista != Not_Found:
             # Escribimos en el log el mensaje de error
             Evento = 'Error: Method incorrect'
             Datos_Log(PATH_LOG, Evento, '', '', '')
