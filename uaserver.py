@@ -82,7 +82,6 @@ class EchoHandler(socketserver.DatagramRequestHandler):
             line = self.rfile.read()
             line_decod = line.decode('utf-8')
             METHOD = line_decod.split(' ')[0].upper()
-            print(line_decod)
             METHODS = ['INVITE', 'BYE', 'ACK']
             if len(line_decod) >= 2:
                 # Escribimos mensages de recepción en el fichero de log
@@ -98,9 +97,7 @@ class EchoHandler(socketserver.DatagramRequestHandler):
                     messg += ' \r\n' + 's=misesion\r\n' + 't=0\r\n'
                     messg += 'm=audio ' + PORT_AUDIO + ' RTP\r\n\r\n'
                     # Enviamos el mensaje de respuesta al INVITE
-                    print(messg)
                     self.wfile.write(bytes(messg, 'utf-8'))
-                    print(messg)
                     # Escribimos los mensages de envio en el log
                     Event = ' Send to '
                     Datos_Log(PATH_LOG, Event, IP_PROXY, PORT_PROXY, messg)
