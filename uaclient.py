@@ -100,6 +100,7 @@ if __name__ == "__main__":
         # Recibimos datos
         data = my_socket.recv(1024)
         data_decod = data.decode('utf-8')
+        print("Recibimos" + data_decod)
 
         # Escribimos el mensaje en el archivo de log el mensaje recibido
         Evento = ' Received from '
@@ -145,13 +146,13 @@ if __name__ == "__main__":
             data = my_socket.recv(1024)
         elif Not_Aut == 'SIP/2.0 401 Unauthorized':
             m = hashlib.md5()
-            Nonce_Salto_Linea = data_decod.split('nonce=')[1]
-            Nonce = Nonce_Salto_Linea.split('\r\n\r\n')[0]
+            Nonce_Salto_Linea = data_decod.split('nonce="')[1]
+            Nonce = Nonce_Salto_Linea.split('"')[0]
             m.update(bytes(PASSWD + Nonce, 'utf-8'))
             RESPONSE = m.hexdigest()
             LINE_REGIST = Line_Sip + USER_NAME + ":" + UASERVER_PORT
             LINE_REGIST += " SIP/2.0\r\n" + "Expires: " + OPTION + "\r\n"
-            LINE_REGIST += "Authorization: response=" + RESPONSE + "\r\n"
+            LINE_REGIST += 'Authorization: response="' + RESPONSE + '"\r\n'
             try:
                 my_socket.send(bytes(LINE_REGIST, 'utf-8') + b'\r\n')
             except error.socket:
@@ -163,6 +164,7 @@ if __name__ == "__main__":
             Datos_Log(PATH_LOG, Evento, IP_PROXY, PORT_PROXY, LINE_REGIST)
             data = my_socket.recv(1024)
             data_decod = data.decode('utf-8')
+            print("Recibimos" + data_decod)
             # Escribimos el mensaje en el archivo de log el mensaje recibido
             Evento = ' Received from '
             Datos_Log(PATH_LOG, Evento, IP_PROXY, PORT_PROXY, data_decod)
