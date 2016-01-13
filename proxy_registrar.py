@@ -116,6 +116,7 @@ class SIPProxyRegisterHandler(socketserver.DatagramRequestHandler):
             # Leyendo línea a línea lo que nos envía el cliente
             line = self.rfile.read()
             line_decod = line.decode('utf-8')
+            print("Recibimos" + line_decod)
             METHOD = line_decod.split(' ')[0].upper()
             # Métodos permitidos
             METHODS = ['REGISTER', 'INVITE', 'BYE', 'ACK']
@@ -134,8 +135,8 @@ class SIPProxyRegisterHandler(socketserver.DatagramRequestHandler):
                     if len(lista) == 4:
                         mssg = 'SIP/2.0 401 Unauthorized\r\n'
                         mssg += 'Via: SIP/2.0/UDP branch=z9hG4bKnashds7\r\n'
-                        mssg += 'WWW Authenticate: nonce=' + str(self.NONCE)
-                        mssg += '\r\n\r\n'
+                        mssg += 'WWW Authenticate: nonce="' + str(self.NONCE)
+                        mssg += '"\r\n\r\n'
                         # Enviamos el mensaje de respuesta al REGISTER sin
                         # Autenticación
                         self.wfile.write(bytes(mssg, 'utf-8'))
@@ -143,8 +144,8 @@ class SIPProxyRegisterHandler(socketserver.DatagramRequestHandler):
                         Event = ' Send to '
                         Datos_Log(PATH_LOG, Event, Ip, Port_UA, mssg)
                     elif len(lista) == 5:
-                        Psswd_Salto_Linea = lista[2].split('response=')[1]
-                        Psswd = Psswd_Salto_Linea.split('\r\n')[0]
+                        Psswd_Salto_Linea = lista[2].split('response="')[1]
+                        Psswd = Psswd_Salto_Linea.split('"')[0]
                         Found = self.CheckPsswd(DATA_PASSWDPATH, Psswd, Client,
                                                 Ip, Puerto)
                         if Found == 'True':
@@ -225,7 +226,7 @@ class SIPProxyRegisterHandler(socketserver.DatagramRequestHandler):
                         mssg = "SIP/2.0 404 User Not Found\r\n\r\n"
                         # Ecribimos los datos que se envian en el log
                         Event = ' Send to '
-                        Datos_Log(Path, Event, Ip, Puerto, mssg)
+                        Datos_Log(PATH_LOG, Event, Ip, Puerto, mssg)
                         self.wfile.write(bytes(mssg, 'utf-8'))
                     else:
                         # Datos de la ip y puerto del usuario registrado
@@ -317,6 +318,7 @@ class SIPProxyRegisterHandler(socketserver.DatagramRequestHandler):
             # Escribimos mensages de recepción en el fichero de log
             Evento = ' Received from '
             Datos_Log(PATH_LOG, Evento, Ip, Puerto, data_decod)
+            print("Recibimos" + data_decod)
             # Si hay un server escuchando seguimos y enviamos
             self.wfile.write(bytes(data_decod, 'utf-8'))
             # Escribimos en el log el mensage enviado
