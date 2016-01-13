@@ -84,7 +84,7 @@ def Time_Caduced(dicc_client):
         Time_now = int(time.time())
         if Time_now >= Expiration:
             Lista.append(Client)
-    
+
     # Borramos del diccionario los clientes expirados
     for Usuario in Lista:
         del dicc_client[Usuario]
@@ -106,7 +106,6 @@ class SIPProxyRegisterHandler(socketserver.DatagramRequestHandler):
     # Variable aleatoria NONCE
     NONCE = random.getrandbits(100)
 
-
     def handle(self):
 
         # Actualizamos el diccionario de clientes por si ha caducado el Espires
@@ -117,7 +116,6 @@ class SIPProxyRegisterHandler(socketserver.DatagramRequestHandler):
             # Leyendo línea a línea lo que nos envía el cliente
             line = self.rfile.read()
             line_decod = line.decode('utf-8')
-            print(line_decod)
             METHOD = line_decod.split(' ')[0].upper()
             # Métodos permitidos
             METHODS = ['REGISTER', 'INVITE', 'BYE', 'ACK']
@@ -151,7 +149,6 @@ class SIPProxyRegisterHandler(socketserver.DatagramRequestHandler):
                         if Found == 'True':
                             try:
                                 Expires = lista[1].split(' ')[1]
-                                print(Expires)
                                 if Expires == '0':
                                     del self.dicc_client[Client]
                                     Event = ' Borrando ' + Client
@@ -196,8 +193,8 @@ class SIPProxyRegisterHandler(socketserver.DatagramRequestHandler):
                         Port_Regist = Usuario_Regist[1]
                         # Miramos que la conexión sea segura y se envían datos
                         # o se hace sys.exit en función de la conexión
-                        self.Conexion_Segura(PATH_LOG, Port_Regist, Ip_Regist, 
-                                            line)
+                        self.Conexion_Segura(PATH_LOG, Port_Regist, Ip_Regist,
+                                             line)
 
                 elif METHOD == 'ACK':
                     Sip_direccion = line_decod.split(' ')[1]
@@ -235,8 +232,8 @@ class SIPProxyRegisterHandler(socketserver.DatagramRequestHandler):
                         Port_Regist = int(Usuario_Regist[1])
                         # Miramos que la conexión sea segura y se envían datos
                         # o se hace sys.exit en función de la conexión
-                        self.Conexion_Segura(PATH_LOG, Port_Regist, Ip_Regist, 
-                                            line)
+                        self.Conexion_Segura(PATH_LOG, Port_Regist, Ip_Regist,
+                                             line)
 
                 elif METHOD not in METHODS:
                     mssg_send = 'SIP/2.0 405 Method Not Allowed\r\n\r\n'
@@ -311,7 +308,7 @@ class SIPProxyRegisterHandler(socketserver.DatagramRequestHandler):
         except socket.error:
             Mssg_Error(Path, Ip, Puerto)
         try:
-            data = my_socket.recv(1024) 
+            data = my_socket.recv(1024)
             data_decod = data.decode('utf-8')
         except socket.error:
             Mssg_Error(Path, Ip, Puerto)
@@ -352,7 +349,7 @@ if __name__ == "__main__":
         DATA_PASSWDPATH = lista[1]['database']['passwdpath']
         PATH_LOG = lista[2]['log']['path']
 
-        fich = open(DATABASE_PATH , "a")
+        fich = open(DATABASE_PATH, "a")
         Linea = "Usuario\tIP\tPuerto\t" + "Fecha de Registro\t"
         Linea += "Tiempo de expiracion\r\n"
         fich.write(Linea)
