@@ -100,14 +100,16 @@ if __name__ == "__main__":
         # Recibimos datos
         data = my_socket.recv(1024)
         data_decod = data.decode('utf-8')
-        print("Recibimos" + data_decod)
+        print("Recibimos\r\n" + data_decod)
 
         # Escribimos el mensaje en el archivo de log el mensaje recibido
         Evento = ' Received from '
         Datos_Log(PATH_LOG, Evento, IP_PROXY, PORT_PROXY, data_decod)
         print("Terminando socket...")
 
-        lista = data_decod.split('\r\n\r\n')[0:-1]
+        Via = 'Via: SIP/2.0/UDP branch=z9hG4bKnashds7\r\n'
+        Separacion = '\r\n' + Via + '\r\n'
+        lista = data_decod.split(Separacion)[0:-1]
         Not_Aut = data_decod.split('\r\n')[0]
         Trying = 'SIP/2.0 100 Trying'
         Ring = 'SIP/2.0 180 Ring'
@@ -127,9 +129,9 @@ if __name__ == "__main__":
             Datos_Log(PATH_LOG, Evento, IP_PROXY, PORT_PROXY, LINEACK)
 
             # RTP
-            Line_restante = data_decod.split('\r\n')[9]
-            IP_RECEPT = lista[4].split(' ')[1]
-            Line_Port = data_decod.split('\r\n')[12]
+            Line_restante = data_decod.split('\r\n')[12]
+            IP_RECEPT = Line_restante.split(' ')[1]
+            Line_Port = data_decod.split('\r\n')[15]
             PORT_RECEPT = Line_Port.split(' ')[1]
             # Contenido del archivo de audio a ejecutar
             Primero_a_Ejecutar = './mp32rtp -i ' + IP_RECEPT + ' -p '
@@ -164,7 +166,7 @@ if __name__ == "__main__":
             Datos_Log(PATH_LOG, Evento, IP_PROXY, PORT_PROXY, LINE_REGIST)
             data = my_socket.recv(1024)
             data_decod = data.decode('utf-8')
-            print("Recibimos" + data_decod)
+            print("Recibimos\r\n" + data_decod)
             # Escribimos el mensaje en el archivo de log el mensaje recibido
             Evento = ' Received from '
             Datos_Log(PATH_LOG, Evento, IP_PROXY, PORT_PROXY, data_decod)
