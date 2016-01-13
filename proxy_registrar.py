@@ -80,7 +80,7 @@ def Time_Caduced(dicc_client):
     # Expires caducado
     Lista = []
     for Client in dicc_client:
-        Expiration = int(dicc_client[Client][4])
+        Expiration = int(dicc_client[Client][3])
         Time_now = int(time.time())
         if Time_now >= Expiration:
             Lista.append(Client)
@@ -132,6 +132,7 @@ class SIPProxyRegisterHandler(socketserver.DatagramRequestHandler):
 
     def handle(self):
 
+        self.txt_registro_seguro(DATABASE_PATH)
         # Actualizamos el diccionario de clientes por si ha caducado el Espires
         # de algún cliente
         Time_Caduced(self.dicc_client)
@@ -183,7 +184,7 @@ class SIPProxyRegisterHandler(socketserver.DatagramRequestHandler):
                                     Now = time.time()
                                     Exp = int(Expires)
                                     Time_Sum = float(Exp) + Now
-                                    cliente = [Ip, Port_UA, Now, Exp, Time_Sum]
+                                    cliente = [Ip, Port_UA, Exp, Time_Sum]
                                     self.dicc_client[Client] = cliente
                                 messg = 'SIP/2.0 200 OK\r\n'
                                 messg += 'Via: SIP/2.0/UDP '
@@ -327,12 +328,39 @@ class SIPProxyRegisterHandler(socketserver.DatagramRequestHandler):
         for Client in self.dicc_client:
             Ip = self.dicc_client[Client][0]
             Port = self.dicc_client[Client][1]
-            Fecha_Registro = self.dicc_client[Client][2]
-            Expiration = self.dicc_client[Client][3]
+            Expiration = self.dicc_client[Client][2]
+            Fecha_Registro = self.dicc_client[Client][3]
             Line = Client + "\t" + Ip + "\t" + str(Port) + "\t"
             Line += str(Fecha_Registro) + "\t\t" + str(Expiration) + "\r\n"
             fich.write(Line)
         fich.close()
+
+    def txt_registro_seguro(self, Path):
+        """
+        Función para guardar los usuarios en un diccionario en caso de que
+        se caiga el proxy
+        """
+        try:
+            Time = 'Tiempo de expiracion\n'
+            Lista = ['Usuario', 'IP', 'Puerto', 'Fecha de Registro', Time]
+            fich = open(Path, "r")
+            lines = fich.readlines()
+            if lines != '':
+                # Nos quedamos con el contenido sin la primera linea
+                lineas = lines[1:]
+            for Client in lineas:
+                Datos = Client.split('\t')
+                if Datos != Lista:
+                    Usuario = Datos[0]
+                    Ip = Datos[1]
+                    Port_UA = Datos[2]
+                    Registro = float(Datos[3])
+                    Exp = int(Datos[5].split('\n')[0])
+                    cliente = [Ip, Port_UA, Exp, Registro]
+                    self.dicc_client[Usuario] = cliente
+            fich.close()
+        except:
+            self.dicc_client = {}
 
     def Conexion_Segura(self, Path, Port, Ip, Line):
         Puerto = str(Port)
@@ -359,7 +387,6 @@ class SIPProxyRegisterHandler(socketserver.DatagramRequestHandler):
             # Escribimos mensages de recepción en el fichero de log
             Evento = ' Received from '
             Datos_Log(PATH_LOG, Evento, Ip, Puerto, data_decod)
-            print("conexio")
             print("Recibimos\r\n" + data_decod)
             Linea = Añadir_Cabecera_Proxy(data_decod)
             # Si hay un server escuchando seguimos y enviamos
