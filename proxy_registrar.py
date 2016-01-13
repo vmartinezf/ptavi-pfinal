@@ -133,6 +133,7 @@ class SIPProxyRegisterHandler(socketserver.DatagramRequestHandler):
                     Port_UA = lista0.split(' ')[0]
                     if len(lista) == 4:
                         mssg = 'SIP/2.0 401 Unauthorized\r\n'
+                        mssg += 'Via: SIP/2.0/UDP branch=z9hG4bKnashds7\r\n'
                         mssg += 'WWW Authenticate: nonce=' + str(self.NONCE)
                         mssg += '\r\n\r\n'
                         # Enviamos el mensaje de respuesta al REGISTER sin
