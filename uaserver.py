@@ -81,6 +81,7 @@ class EchoHandler(socketserver.DatagramRequestHandler):
             # Leyendo línea a línea lo que nos envía el cliente
             line = self.rfile.read()
             line_decod = line.decode('utf-8')
+            print("Recibimos" + line_decod)
             METHOD = line_decod.split(' ')[0].upper()
             METHODS = ['INVITE', 'BYE', 'ACK']
             if len(line_decod) >= 2:
