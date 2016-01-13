@@ -97,6 +97,30 @@ def Mssg_Error(Path, Ip, Port):
     sys.exit("Error: No server listening at " + Ip + " Port " + Port + "\r\n")
 
 
+def Añadir_Cabecera_Proxy(line_decod):
+    lista = line_decod.split('\r\n\r\n')[0:-1]
+    Trying = 'SIP/2.0 100 Trying'
+    Ring = 'SIP/2.0 180 Ring'
+    OK = 'SIP/2.0 200 OK'
+    Via = 'Via: SIP/2.0/UDP branch=z9hG4bKnashds7\r\n'
+    if lista[0:3] != [Trying, Ring, OK]:
+        Mess_Sig = str(line_decod.split('\r\n')[0])
+        Lista_Resto = line_decod.split('\r\n')[1:]
+        Resto = Lista_Resto[0]
+        for elemento in Lista_Resto:
+            if elemento != Lista_Resto[0]:
+                Resto += '\r\n' + elemento
+        mssg = Mess_Sig + '\r\n' + Via + Resto + '\r\n'
+    else:
+        Mssg_Trying = str(lista[0]) + '\r\n' + Via + '\r\n'
+        Mssg_Ring = str(lista[1]) + '\r\n' + Via + '\r\n'
+        Mssg_Ok = str(lista[2]) + '\r\n' + Via + '\r\n'
+        Resto = line_decod.split('SIP/2.0 200 OK\r\n\r\n')[1]
+        mssg = Mssg_Trying + Mssg_Ring + Mssg_Ok + Resto
+    Message = bytes(mssg, 'utf-8')
+    return Message
+
+
 class SIPProxyRegisterHandler(socketserver.DatagramRequestHandler):
     """
     Echo proxy class
@@ -116,7 +140,7 @@ class SIPProxyRegisterHandler(socketserver.DatagramRequestHandler):
             # Leyendo línea a línea lo que nos envía el cliente
             line = self.rfile.read()
             line_decod = line.decode('utf-8')
-            print("Recibimos" + line_decod)
+            print("Recibimos:\r\n" + line_decod)
             METHOD = line_decod.split(' ')[0].upper()
             # Métodos permitidos
             METHODS = ['REGISTER', 'INVITE', 'BYE', 'ACK']
@@ -161,7 +185,9 @@ class SIPProxyRegisterHandler(socketserver.DatagramRequestHandler):
                                     Time_Sum = float(Exp) + Now
                                     cliente = [Ip, Port_UA, Now, Exp, Time_Sum]
                                     self.dicc_client[Client] = cliente
-                                messg = "SIP/2.0 200 OK\r\n\r\n"
+                                messg = 'SIP/2.0 200 OK\r\n'
+                                messg += 'Via: SIP/2.0/UDP '
+                                messg += 'branch=z9hG4bKnashds7\r\n\r\n'
                                 self.wfile.write(bytes(messg, 'utf-8'))
                                 # Escribimos el mensage de envio en el log
                                 Event = ' Send to '
@@ -184,7 +210,9 @@ class SIPProxyRegisterHandler(socketserver.DatagramRequestHandler):
                     # En función de si está registrado o no actuamos de
                     # diferente forma
                     if Usuario_Regist == '0':
-                        mssg = "SIP/2.0 404 User Not Found\r\n\r\n"
+                        mssg = "SIP/2.0 404 User Not Found\r\n"
+                        mssg += "Via: SIP/2.0/UDP "
+                        mssg += "branch=z9hG4bKnashds7\r\n\r\n"
                         # Ecribimos los datos que se envian en el log
                         Event = ' Send to '
                         Datos_Log(PATH_LOG, Event, Ip, Puerto, mssg)
@@ -195,8 +223,9 @@ class SIPProxyRegisterHandler(socketserver.DatagramRequestHandler):
                         Port_Regist = Usuario_Regist[1]
                         # Miramos que la conexión sea segura y se envían datos
                         # o se hace sys.exit en función de la conexión
+                        Linea = Añadir_Cabecera_Proxy(line_decod)
                         self.Conexion_Segura(PATH_LOG, Port_Regist, Ip_Regist,
-                                             line)
+                                             Linea)
 
                 elif METHOD == 'ACK':
                     Sip_direccion = line_decod.split(' ')[1]
@@ -205,6 +234,8 @@ class SIPProxyRegisterHandler(socketserver.DatagramRequestHandler):
                     Usuario_Regist = register2registered(self.dicc_client, UA)
                     if Usuario_Regist == '0':
                         mssg = "SIP/2.0 404 User Not Found\r\n\r\n"
+                        mssg += "Via: SIP/2.0/UDP "
+                        mssg += "branch=z9hG4bKnashds7\r\n\r\n"
                         # Ecribimos los datos que se envian en el log
                         Event = ' Send to '
                         Datos_Log(Path, Event, Ip, Puerto, mssg)
@@ -215,7 +246,8 @@ class SIPProxyRegisterHandler(socketserver.DatagramRequestHandler):
                         Port_Regist = int(Usuario_Regist[1])
 
                         # Abrimos un socket y enviamos
-                        Open_Socket(PATH_LOG, Ip_Regist, Port_Regist, line)
+                        Linea = Añadir_Cabecera_Proxy(line_decod)
+                        Open_Socket(PATH_LOG, Ip_Regist, Port_Regist, Linea)
 
                 elif METHOD == 'BYE':
                     Sip_direccion = line_decod.split(' ')[1]
@@ -224,6 +256,8 @@ class SIPProxyRegisterHandler(socketserver.DatagramRequestHandler):
                     Usuario_Regist = register2registered(self.dicc_client, UA)
                     if Usuario_Regist == '0':
                         mssg = "SIP/2.0 404 User Not Found\r\n\r\n"
+                        mssg += "Via: SIP/2.0/UDP "
+                        mssg += "branch=z9hG4bKnashds7\r\n\r\n"
                         # Ecribimos los datos que se envian en el log
                         Event = ' Send to '
                         Datos_Log(PATH_LOG, Event, Ip, Puerto, mssg)
@@ -234,11 +268,14 @@ class SIPProxyRegisterHandler(socketserver.DatagramRequestHandler):
                         Port_Regist = int(Usuario_Regist[1])
                         # Miramos que la conexión sea segura y se envían datos
                         # o se hace sys.exit en función de la conexión
+                        Linea = Añadir_Cabecera_Proxy(line_decod)
                         self.Conexion_Segura(PATH_LOG, Port_Regist, Ip_Regist,
-                                             line)
+                                             Linea)
 
                 elif METHOD not in METHODS:
                     mssg_send = 'SIP/2.0 405 Method Not Allowed\r\n\r\n'
+                    mssg_send += 'Via: SIP/2.0/UDP '
+                    mssg_send += 'branch=z9hG4bKnashds7\r\n\r\n'
                     self.wfile.write(bytes(mssg_send, 'utf-8'))
                     # Escribimos en el log el mensaje de envío 405
                     Event = ' Send to '
@@ -246,6 +283,8 @@ class SIPProxyRegisterHandler(socketserver.DatagramRequestHandler):
                 else:
                     # Respuesta mal formada
                     mssg_send = 'SIP/2.0 400 Bad Request\r\n\r\n'
+                    mssg_send += 'Via: SIP/2.0/UDP '
+                    mssg_send += 'branch=z9hG4bKnashds7\r\n\r\n'
                     self.wfile.write(bytes(mssg_send, 'utf-8'))
                     # Escribimos en el log el mensaje de envío 405
                     Event = ' Send to '
@@ -270,7 +309,9 @@ class SIPProxyRegisterHandler(socketserver.DatagramRequestHandler):
                 if RESPONSE == Passwd:
                     Found = 'True'
                 else:
-                    message = 'Acceso denegado: password is incorrect\r\n\r\n'
+                    message = 'Acceso denegado: password is incorrect\r\n'
+                    message += 'Via: SIP/2.0/UDP '
+                    message += 'branch=z9hG4bKnashds7\r\n\r\n'
                     self.wfile.write(bytes(message, 'utf-8'))
                     # Escribimos en el log el mensaje acceso denegado
                     Event = ' Send to '
@@ -318,12 +359,14 @@ class SIPProxyRegisterHandler(socketserver.DatagramRequestHandler):
             # Escribimos mensages de recepción en el fichero de log
             Evento = ' Received from '
             Datos_Log(PATH_LOG, Evento, Ip, Puerto, data_decod)
-            print("Recibimos" + data_decod)
+            print("conexio")
+            print("Recibimos\r\n" + data_decod)
+            Linea = Añadir_Cabecera_Proxy(data_decod)
             # Si hay un server escuchando seguimos y enviamos
-            self.wfile.write(bytes(data_decod, 'utf-8'))
+            self.wfile.write(Linea)
             # Escribimos en el log el mensage enviado
             Event = ' Send to '
-            Datos_Log(PATH_LOG, Event, Ip, Puerto, data_decod)
+            Datos_Log(PATH_LOG, Event, Ip, Puerto, Linea.decode('utf-8'))
         except:
             Mssg_Error(Path, Ip, Puerto)
 
