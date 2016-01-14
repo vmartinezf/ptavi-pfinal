@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <config>
 	<server name="MiServidorGuay" ip="127.0.0.1" puerto="5050"/>
-	<database path="database.txt" passwdpath="passwd.txt" />
+	<database path="database.txt" passwdpath="passwords.txt" />
     <log path="proxy_log.txt"/>
 </config>
