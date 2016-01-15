@@ -13,6 +13,7 @@ from xml.sax.handler import ContentHandler
 import hashlib
 from uaserver import XMLHandler
 from uaserver import Datos_Log
+from uaserver import Thread_CVLC
 
 
 # Cliente UDP simple Sip.
@@ -133,15 +134,13 @@ if __name__ == "__main__":
             IP_RECEPT = Line_restante.split(' ')[1]
             Line_Port = data_decod.split('\r\n')[15]
             PORT_RECEPT = Line_Port.split(' ')[1]
-            # Contenido del archivo de audio a ejecutar
-            Primero_a_Ejecutar = './mp32rtp -i ' + IP_RECEPT + ' -p '
-            Segundo_a_Ejecutar = str(PORT_RECEPT) + '<' + PATH_AUDIO
-            aEjecutar = Primero_a_Ejecutar + Segundo_a_Ejecutar
             # Escribimos el mensage de comienzo RTP en el log
             Event = ' Terminando el envío RTP '
             Datos_Log(PATH_LOG, Event, '', '', '')
-            # Se está ejecutando
-            os.system(aEjecutar)
+            # Ejecutamos el Thread
+            hilo = Thread_CVLC(PORT_RECEPT, IP_RECEPT, PATH_AUDIO)
+            hilo.start()
+            hilo.join()
             # Escribimos el mensage de fin RTP en el log
             Event = ' Terminando el envío RTP '
             Datos_Log(PATH_LOG, Event, '', '', '')
@@ -154,7 +153,8 @@ if __name__ == "__main__":
             RESPONSE = m.hexdigest()
             LINE_REGIST = Line_Sip + USER_NAME + ":" + UASERVER_PORT
             LINE_REGIST += " SIP/2.0\r\n" + "Expires: " + OPTION + "\r\n"
-            LINE_REGIST += 'Authorization: response="' + RESPONSE + '"\r\n'
+            LINE_REGIST += 'Authorization: Digest response="' + RESPONSE
+            LINE_REGIST += '"\r\n'
             try:
                 my_socket.send(bytes(LINE_REGIST, 'utf-8') + b'\r\n')
             except error.socket:
