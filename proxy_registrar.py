@@ -121,6 +121,16 @@ def Añadir_Cabecera_Proxy(line_decod):
     return Message
 
 
+def Port_Incorrect(Path, Ip, Port):
+    messg = "Port no es un entero\r\n"
+    messg += 'Via: SIP/2.0/UDP '
+    messg += 'branch=z9hG4bKnashds7\r\n\r\n'
+    # Escribimos el mensage de envio en el log
+    Event = ' Send to '
+    Datos_Log(Path, Event, Ip, Port, messg)
+    return messg
+
+
 class SIPProxyRegisterHandler(socketserver.DatagramRequestHandler):
     """
     Echo proxy class
@@ -157,6 +167,10 @@ class SIPProxyRegisterHandler(socketserver.DatagramRequestHandler):
                     Client = lista[0].split(':')[1]
                     lista0 = lista[0].split(':')[2]
                     Port_UA = lista0.split(' ')[0]
+                    if type(Port_UA) != int:
+                        messg = Port_Incorrect(PATH_LOG, Ip, Port_UA)
+                        self.wfile.write(bytes(messg, 'utf-8'))
+                        sys.exit("The port isn´t a integer")
                     if len(lista) == 4:
                         mssg = 'SIP/2.0 401 Unauthorized\r\n'
                         mssg += 'Via: SIP/2.0/UDP branch=z9hG4bKnashds7\r\n'
@@ -196,11 +210,13 @@ class SIPProxyRegisterHandler(socketserver.DatagramRequestHandler):
                                 self.register2txt(DATABASE_PATH, Ip, Client)
 
                             except:
-                                messg = "Expires no es un entero\r\n\r\n"
+                                messg = "Expires no es un entero\r\n"
+                                messg += 'Via: SIP/2.0/UDP '
+                                messg += 'branch=z9hG4bKnashds7\r\n\r\n'
                                 self.wfile.write(bytes(messg, 'utf-8'))
                                 # Escribimos el mensage de envio en el log
                                 Event = ' Send to '
-                                #Datos_Log(PATH_LOG, Event, Ip, Puerto, messg)
+                                Datos_Log(PATH_LOG, Event, Ip, Puerto, messg)
                                 break
 
                 elif METHOD == 'INVITE':
