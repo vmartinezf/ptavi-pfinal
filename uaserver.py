@@ -11,8 +11,8 @@ import os
 import os.path
 from xml.sax import make_parser
 from xml.sax.handler import ContentHandler
-import hashlib
 import time
+import threading
 
 
 # Creamos una clase XMLHandler de la misma forma que creamos una en la P3 para
@@ -70,6 +70,31 @@ def Datos_Log(fichero, evento, ip, port, line):
     fich.close()
 
 
+class Thread_CVLC(threading.Thread):
+    """
+    Clase para crear hilos vcl
+    """
+
+    def __init__(self, Port, Ip, Path):
+        threading.Thread.__init__(self)
+        self.Port = Port
+        self.Ip = Ip
+        self.Path = Path
+
+    def run(self):
+        try:
+            aEjecutarcvlc = 'cvlc rtp://@' + self.Ip + ':'
+            aEjecutarcvlc += str(self.Port) + ' &'
+            # Se está ejecutando
+            os.system(aEjecutarcvlc)
+            aEjecutar = './mp32rtp -i ' + self.Ip + ' -p '
+            aEjecutar += str(self.Port) + '<' + self.Path
+            # Se está ejecutando
+            os.system(aEjecutar)
+        except:
+            sys.exit("Usage: Error en ejecución")
+
+
 class EchoHandler(socketserver.DatagramRequestHandler):
     """
     Echo server class
@@ -103,15 +128,13 @@ class EchoHandler(socketserver.DatagramRequestHandler):
                     Event = ' Send to '
                     Datos_Log(PATH_LOG, Event, IP_PROXY, PORT_PROXY, messg)
                 elif METHOD == 'ACK':
-                    # Contenido del archivo de audio a ejecutar
-                    Primero_a_Ejecutar = './mp32rtp -i ' + IP_PROXY + ' -p '
-                    Segundo_a_Ejecutar = str(PORT_AUDIO) + '<' + PATH_AUDIO
-                    aEjecutar = Primero_a_Ejecutar + Segundo_a_Ejecutar
                     # Escribimos el mensage de comienzo RTP en el log
                     Event = ' Comenzando el envío RTP '
                     Datos_Log(PATH_LOG, Event, '', '', '')
-                    # Se está ejecutando
-                    os.system(aEjecutar)
+                    # Ejecutamos el Thread
+                    hilo = Thread_CVLC(PORT_AUDIO, IP_PROXY, PATH_AUDIO)
+                    hilo.start()
+                    hilo.join()
                     # Escribimos el mensage de fin RTP en el log
                     Event = ' Terminando el envío RTP '
                     Datos_Log(PATH_LOG, Event, '', '', '')
