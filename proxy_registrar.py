@@ -160,8 +160,8 @@ class SIPProxyRegisterHandler(socketserver.DatagramRequestHandler):
                     if len(lista) == 4:
                         mssg = 'SIP/2.0 401 Unauthorized\r\n'
                         mssg += 'Via: SIP/2.0/UDP branch=z9hG4bKnashds7\r\n'
-                        mssg += 'WWW Authenticate: nonce="' + str(self.NONCE)
-                        mssg += '"\r\n\r\n'
+                        mssg += 'WWW Authenticate: Digest nonce="'
+                        mssg += str(self.NONCE) + '"\r\n\r\n'
                         # Enviamos el mensaje de respuesta al REGISTER sin
                         # Autenticación
                         self.wfile.write(bytes(mssg, 'utf-8'))
