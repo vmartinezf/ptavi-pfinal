@@ -141,6 +141,7 @@ if __name__ == "__main__":
             hilo = Thread_CVLC(PORT_RECEPT, IP_RECEPT, PATH_AUDIO)
             hilo.start()
             hilo.join()
+            os.system('pkill -9 4604')
             # Escribimos el mensage de fin RTP en el log
             Event = ' Terminando el envío RTP '
             Datos_Log(PATH_LOG, Event, '', '', '')
