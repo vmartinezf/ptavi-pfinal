@@ -140,14 +140,13 @@ class EchoHandler(socketserver.DatagramRequestHandler):
                     hilo.start()
                     Envio_rtp = 'Enviamos RTP'
                     hilo.join()
-                    os.system('pkill -9 4604')
+                    os.system('killall vlc')
                     Envio_rtp = ''
                     # Escribimos el mensage de fin RTP en el log
                     Event = ' Terminando el envío RTP '
                     Datos_Log(PATH_LOG, Event, '', '', '')
                 elif METHOD == 'BYE':
-                    os.system(r'pkill -9 mp32rtp')
-                    os.system('pkill -9 4604')
+                    os.system('pkill -9 ' + Proceso)
                     Envio_rtp = ''
                     mssg_send = "SIP/2.0 200 OK\r\n\r\n"
                     self.wfile.write(bytes(mssg_send, 'utf-8'))
