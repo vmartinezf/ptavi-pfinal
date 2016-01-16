@@ -146,7 +146,7 @@ class EchoHandler(socketserver.DatagramRequestHandler):
                     Event = ' Terminando el envío RTP '
                     Datos_Log(PATH_LOG, Event, '', '', '')
                 elif METHOD == 'BYE':
-                    os.system('pkill -9 ' + Proceso)
+                    os.system('killall vlc')
                     Envio_rtp = ''
                     mssg_send = "SIP/2.0 200 OK\r\n\r\n"
                     self.wfile.write(bytes(mssg_send, 'utf-8'))
