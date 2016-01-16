@@ -102,6 +102,7 @@ class EchoHandler(socketserver.DatagramRequestHandler):
 
     def handle(self):
         # Escribe dirección y puerto del cliente (de tupla client_address)
+        Envio_rtp = ''
         while 1:
             # Leyendo línea a línea lo que nos envía el cliente
             line = self.rfile.read()
@@ -114,14 +115,17 @@ class EchoHandler(socketserver.DatagramRequestHandler):
                 Evento = ' Received from '
                 Datos_Log(PATH_LOG, Evento, IP_PROXY, PORT_PROXY, line_decod)
                 if METHOD == 'INVITE':
-                    messg = 'SIP/2.0 100 Trying\r\n\r\n'
-                    messg += 'SIP/2.0 180 Ring\r\n\r\n'
-                    messg += 'SIP/2.0 200 OK\r\n\r\n'
-                    messg += 'Content-Type: application/sdp\r\n\r\n'
-                    messg += 'v=0\r\n'
-                    messg += 'o=' + USER_NAME + ' ' + UASERVER_IP
-                    messg += ' \r\n' + 's=misesion\r\n' + 't=0\r\n'
-                    messg += 'm=audio ' + PORT_AUDIO + ' RTP\r\n\r\n'
+                    if Envio_rtp == 'Enviamos RTP':
+                        messg = '480 Temporarily Unavailable\r\n\r\n'
+                    else:
+                        messg = 'SIP/2.0 100 Trying\r\n\r\n'
+                        messg += 'SIP/2.0 180 Ring\r\n\r\n'
+                        messg += 'SIP/2.0 200 OK\r\n\r\n'
+                        messg += 'Content-Type: application/sdp\r\n\r\n'
+                        messg += 'v=0\r\n'
+                        messg += 'o=' + USER_NAME + ' ' + UASERVER_IP
+                        messg += ' \r\n' + 's=misesion\r\n' + 't=0\r\n'
+                        messg += 'm=audio ' + PORT_AUDIO + ' RTP\r\n\r\n'
                     # Enviamos el mensaje de respuesta al INVITE
                     self.wfile.write(bytes(messg, 'utf-8'))
                     # Escribimos los mensages de envio en el log
@@ -134,11 +138,17 @@ class EchoHandler(socketserver.DatagramRequestHandler):
                     # Ejecutamos el Thread
                     hilo = Thread_CVLC(PORT_AUDIO, IP_PROXY, PATH_AUDIO)
                     hilo.start()
+                    Envio_rtp = 'Enviamos RTP'
                     hilo.join()
+                    os.system('pkill -9 4604')
+                    Envio_rtp = ''
                     # Escribimos el mensage de fin RTP en el log
                     Event = ' Terminando el envío RTP '
                     Datos_Log(PATH_LOG, Event, '', '', '')
                 elif METHOD == 'BYE':
+                    os.system(r'pkill -9 mp32rtp')
+                    os.system('pkill -9 4604')
+                    Envio_rtp = ''
                     mssg_send = "SIP/2.0 200 OK\r\n\r\n"
                     self.wfile.write(bytes(mssg_send, 'utf-8'))
                     # Escribimos el mensage de envio en el log
