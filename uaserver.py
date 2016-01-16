@@ -106,10 +106,10 @@ class EchoHandler(socketserver.DatagramRequestHandler):
             # Leyendo línea a línea lo que nos envía el cliente
             line = self.rfile.read()
             line_decod = line.decode('utf-8')
-            print("Recibimos\r\n" + line_decod)
             METHOD = line_decod.split(' ')[0].upper()
             METHODS = ['INVITE', 'BYE', 'ACK']
             if len(line_decod) >= 2:
+                print("Recibimos\r\n" + line_decod)
                 # Escribimos mensages de recepción en el fichero de log
                 Evento = ' Received from '
                 Datos_Log(PATH_LOG, Evento, IP_PROXY, PORT_PROXY, line_decod)
