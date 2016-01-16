@@ -121,16 +121,6 @@ def Añadir_Cabecera_Proxy(line_decod):
     return Message
 
 
-def Port_Incorrect(Path, Ip, Port):
-    messg = "Port no es un entero\r\n"
-    messg += 'Via: SIP/2.0/UDP '
-    messg += 'branch=z9hG4bKnashds7\r\n\r\n'
-    # Escribimos el mensage de envio en el log
-    Event = ' Send to '
-    Datos_Log(Path, Event, Ip, Port, messg)
-    return messg
-
-
 class SIPProxyRegisterHandler(socketserver.DatagramRequestHandler):
     """
     Echo proxy class
@@ -151,26 +141,23 @@ class SIPProxyRegisterHandler(socketserver.DatagramRequestHandler):
             # Leyendo línea a línea lo que nos envía el cliente
             line = self.rfile.read()
             line_decod = line.decode('utf-8')
-            print("Recibimos:\r\n" + line_decod)
             METHOD = line_decod.split(' ')[0].upper()
             # Métodos permitidos
             METHODS = ['REGISTER', 'INVITE', 'BYE', 'ACK']
             # La IP y el Puerto de quien recibimos el mensaje
             Ip = self.client_address[0]
             Puerto = self.client_address[1]
-            # Escribimos mensages de recepción en el fichero de log
-            Evento = ' Received from '
-            Datos_Log(PATH_LOG, Evento, Ip, Puerto, line_decod)
+            if line_decod != '':
+                print("Recibimos:\r\n" + line_decod)
+                # Escribimos mensages de recepción en el fichero de log
+                Evento = ' Received from '
+                Datos_Log(PATH_LOG, Evento, Ip, Puerto, line_decod)
             if len(line_decod) >= 2:
                 if METHOD == 'REGISTER':
                     lista = line_decod.split('\r\n')
                     Client = lista[0].split(':')[1]
                     lista0 = lista[0].split(':')[2]
                     Port_UA = lista0.split(' ')[0]
-                    if type(Port_UA) != int:
-                        messg = Port_Incorrect(PATH_LOG, Ip, Port_UA)
-                        self.wfile.write(bytes(messg, 'utf-8'))
-                        sys.exit("The port isn´t a integer")
                     if len(lista) == 4:
                         mssg = 'SIP/2.0 401 Unauthorized\r\n'
                         mssg += 'Via: SIP/2.0/UDP branch=z9hG4bKnashds7\r\n'
